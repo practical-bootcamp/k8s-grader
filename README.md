@@ -22,9 +22,16 @@ aws configure
 aws configure set aws_session_token  AQoDYXdzEJr...<remainder of session token>
 ```
 
-## Deploy the project
+## Deploy the SAM project
 ```
 cd k8s-grader-api
 sam build
 sam deploy
+```
+
+## Deploy Minikube
+After configure the AWS Credentials, then run
+```
+cd k8s/minikube
+./deploy.sh
 ```
