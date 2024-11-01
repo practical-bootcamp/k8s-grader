@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy EC2 instance with Minikube using CloudFormation
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: vockey
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+
+Resources:
+  MinikubeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: minikube-sg
+      GroupDescription: Security group for Minikube
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  MinikubeInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      ImageId: ami-06b21ccaeff8cd686
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref MinikubeSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-latest.x86_64.rpm
+          sudo rpm -Uvh minikube-latest.x86_64.rpm
+          sudo yum update -y
+          sudo yum install -y docker
+          sudo usermod -aG docker ec2-user
+          sudo systemctl start docker && sudo systemctl enable docker
+          docker -v
+          curl -Ls https://storage.googleapis.com/kubernetes-release/release/stable.txt
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.31.0/bin/linux/amd64/kubectl
+          sudo chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+          TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" \
+                            -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4 \
+                                -H "X-aws-ec2-metadata-token: $TOKEN")
+          su - ec2-user -c "minikube start --apiserver-ips=$PRIVATE_IP --driver=docker"
+          su - ec2-user -c "minikube addons enable metrics-server"
+          su - ec2-user -c "minikube status"
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdh
+          Ebs:
+            VolumeSize: 30
+      Tags:
+        - Key: Name
+          Value: minikube
+
+Outputs:
+  InstancePublicIp:
+    Description: The public IP address of the Minikube instance
+    Value: !GetAtt MinikubeInstance.PublicIp
+
+  SSHCommand:
+    Description: SSH command to connect to the Minikube instance
+    Value: !Sub "ssh -i ${KeyName}.pem ec2-user@${MinikubeInstance.PublicIp}"

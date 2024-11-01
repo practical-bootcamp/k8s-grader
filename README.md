@@ -33,5 +33,9 @@ sam deploy
 After configure the AWS Credentials, then run
 ```
 cd k8s/minikube
-./deploy.sh
+aws cloudformation create-stack --stack-name minikube-stack --template-body file://minikube.yaml
+```
+Delete Minikube
+```
+aws cloudformation delete-stack --stack-name minikube-stack
 ```
