@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AMIID="ami-0866a3c8686eaeeba"
+AMIID="ami-06b21ccaeff8cd686" # Amazon Linux 2023 AMI
 INSTANCE_TYPE="t3.medium"
 USER_DATA_FILE="userdata.sh"
 EBS_SIZE=10

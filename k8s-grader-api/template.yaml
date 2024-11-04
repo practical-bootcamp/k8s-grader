@@ -2,9 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   k8s-grader-api
-
   Sample SAM Template for k8s-grader-api
-
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -12,6 +10,18 @@ Globals:
     MemorySize: 128
 
 Resources:
+
+  LibLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: LibLayer
+      Description: A layer for shared libraries
+      ContentUri: layer
+      CompatibleRuntimes:
+        - python3.11
+    Metadata:
+      BuildMethod: makefile   # Required to have AWS SAM build this layer
+
   GameTaskFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -21,6 +31,8 @@ Resources:
       Architectures:
         - x86_64
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref LibLayer
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -28,6 +40,24 @@ Resources:
             Path: /game_task
             Method: get
 
+  GraderFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: grader/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref LibLayer
+      Events:
+        GameTask:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /grader
+            Method: get
+            
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
