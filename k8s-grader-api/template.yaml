@@ -6,10 +6,21 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 15
     MemorySize: 128
 
 Resources:
+
+  K8sAccountTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
 
   LibLayer:
     Type: AWS::Serverless::LayerVersion
@@ -37,7 +48,7 @@ Resources:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /game_task
+            Path: /game-task
             Method: get
 
   GraderFunction:
@@ -51,17 +62,52 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+      Environment:
+        Variables:
+          K8sAccountTable: !Ref K8sAccountTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /grader
             Method: get
-            
+
+  SaveK8sAccountFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: save-k8s-account/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref LibLayer
+      Environment:
+        Variables:
+          K8sAccountTable: !Ref K8sAccountTable
+      Events:
+        GameTaskGet:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /save-k8s-account
+            Method: get            
+        GameTaskGetPost:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /save-k8s-account
+            Method: post
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   GameApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game_task/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
+  SaveK8sAccountApi:
+    Description: "API Gateway endpoint URL for Prod stage for Save K8s Account function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
+  GraderApi:
+    Description: "API Gateway endpoint URL for Prod stage for Grader function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"

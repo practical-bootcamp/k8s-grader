@@ -19,7 +19,7 @@ export AWS_DEFAULT_REGION=us-east-1
 Method 2: Set the token with CLI
 ```
 aws configure
-aws configure set aws_session_token  IQoJb3JpZ2luX2VjEGkaCXVzLXdlc3QtMiJHMEUCIDUWMbligXWYVOC+Ys1AdMrTT7EJhhy6dPlBuH2FVYT/AiEAn6q3JvH5A5vVLFjRVoLVjQuEjtoXR26+OaxztYP7q4wqrwII4v//////////ARAAGgw5NzUwNDk4ODcwMTkiDNJWB0V07FC1CWQNtSqDArQL15dsum9zRmNHrV0/iNvVCoV2lgbGjdW1m1KECFVx16q8Vnn2gVdm6iAQiobtDnpxTTUctXxlmeRsab7EvxoLOl4fV+zE5XVi/q1nz5YlMb56hG78BDrh2/js+memjyVHXQ5+FHgjLkfWo9BHseILQ1D2D4v5iEfiwW8nvpF+ktPU/k5JTYlep25FJ4yJb1ib+dC6UjryaMeP0gCBh+HuSjW3RPBT36BiLvpMLWun39Qk1Zlc0es/u9J1imsrx4W4Rf/d69Hoeqym2GlQKYTR8tXeaN3DwW8quh0kfTmUIPC2v+ADGHsumiV6KdOoblfcjVcfx+fxlv4Y6fOw9G4H/QUwy62guQY6nQHW2RSdfAyG7ZwVpHyUG7xe06uC1nz/lh3xmyXgnAFAlR/6YYh1cBaINXi/2q93mB5hJa3D8UaslqxAx7hKzg7S3D+I92IfB2jOgqzID5TF5Wk+vX5ItUoo04zUWxYztZxDhFV/OesNO+v8R5K3yv9OqGYslHn5QpyyLFO1fDWoD5h4g5+YtnhZsvyU8TiXj/XQiquHb8joAShfGN5A
+aws configure set aws_session_token <Session Token>
 ```
 
 ## Deploy the SAM project
@@ -38,4 +38,23 @@ aws cloudformation create-stack --stack-name minikube-stack --template-body file
 Delete Minikube
 ```
 aws cloudformation delete-stack --stack-name minikube-stack
+```
+
+
+## Minikube dashboard
+For more information on how to make the Minikube dashboard accessible on all IPs (0.0.0.0), refer to [this link](https://unix.stackexchange.com/questions/621369/how-can-i-make-the-minikube-dashboard-answer-on-all-ips-0-0-0-0).
+
+```
+kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
+minikube dashboard --url
+```
+
+Sample Data
+```
+{
+ "email": "cywong@vtc.edu.hk",
+ "client_certificate": "-----BEGIN RSA PRIVATE KEY-----XXX-----END RSA PRIVATE KEY-----\n",
+ "client_key": "-----BEGIN CERTIFICATE-----XX-----END CERTIFICATE-----\n",
+ "endpoint": "http://3.90.40.12:8001"
+}
 ```
