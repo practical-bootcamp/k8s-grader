@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define variables
+SSH_HOST="3.90.40.12"
 SSH_KEY="labsuser.pem"
 SSH_USER="ec2-user"
-SSH_HOST="98.80.223.67"
 REMOTE_DIR="/home/ec2-user/.minikube/profiles/minikube"
 LOCAL_DIR="./downloaded_files"
 
@@ -13,5 +13,7 @@ mkdir -p $LOCAL_DIR
 # Download files
 scp -i $SSH_KEY $SSH_USER@$SSH_HOST:$REMOTE_DIR/client.crt $LOCAL_DIR/
 scp -i $SSH_KEY $SSH_USER@$SSH_HOST:$REMOTE_DIR/client.key $LOCAL_DIR/
+scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.minikube/ca.crt $LOCAL_DIR/
+scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.kube/config $LOCAL_DIR/
 
 echo "Files downloaded to $LOCAL_DIR"

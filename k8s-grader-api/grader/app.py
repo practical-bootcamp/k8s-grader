@@ -1,43 +1,98 @@
 import json
+import os
+import base64
+import boto3
 from kubernetes import client, config
 
-# import requests
-
+dynamodb = boto3.resource('dynamodb')
+table_name =  os.environ['K8sAccountTable']
+table = dynamodb.Table(table_name)
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
+    email = event.get('queryStringParameters', {}).get('email')
+    if not email:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "Email parameter is missing"})
+        }
 
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
+    try:
+        response = table.get_item(Key={'email': email})
+    except Exception:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Error accessing DynamoDB"})
+        }
 
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
+    if 'Item' not in response:
+        return {
+            "statusCode": 404,
+            "body": json.dumps({"message": "Email not found in the database"})
+        }
 
-    context: object, required
-        Lambda Context runtime methods and attributes
+    user_data = response['Item']
+    client_certificate = user_data.get('client_certificate')
+    client_key = user_data.get('client_key')
+    endpoint = user_data.get('endpoint')
 
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
+    if not all([client_certificate, client_key, endpoint]):
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Incomplete user data"})
+        }
 
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
+    kube_config = build_kube_config(client_certificate, client_key, endpoint)
 
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
-
-    # try:
-    #     ip = requests.get("http://checkip.amazonaws.com/")
-    # except requests.RequestException as e:
-    #     # Send some context about this error to Lambda Logs
-    #     print(e)
-
-    #     raise e
+    try:     
+        config.load_kube_config_from_dict(kube_config)
+        v1 = client.CoreV1Api()
+        nodes = v1.list_node()
+        node_info = [
+            {"name": item.metadata.name, "ip": item.status.addresses[0].address} for item in nodes.items
+        ]
+    except Exception:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Error accessing Kubernetes API"})
+        }
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "message": "hello world",
-            # "location": ip.text.replace("\n", "")
-        }),
+        "body": json.dumps({"nodes": node_info})
+    }
+
+def build_kube_config(client_certificate, client_key, endpoint):
+    cert_data = base64.b64encode(client_certificate.encode('utf-8')).decode('utf-8')
+    key_data = base64.b64encode(client_key.encode('utf-8')).decode('utf-8')
+
+    return {
+        "apiVersion": "v1",
+        "kind": "Config",
+        "clusters": [
+            {
+                "name": "k8s-cluster",
+                "cluster": {
+                    "server": endpoint
+                }
+            }
+        ],
+        "contexts": [
+            {
+                "name": "k8s-context",
+                "context": {
+                    "cluster": "k8s-cluster",
+                    "user": "k8s-user"
+                }
+            }
+        ],
+        "current-context": "k8s-context",
+        "users": [
+            {
+                "name": "k8s-user",
+                "user": {
+                    "client-certificate-data": cert_data,
+                    "client-key-data": key_data
+                }
+            }
+        ]
     }
