@@ -13,7 +13,7 @@ mkdir -p $LOCAL_DIR
 # Download files
 scp -i $SSH_KEY $SSH_USER@$SSH_HOST:$REMOTE_DIR/client.crt $LOCAL_DIR/
 scp -i $SSH_KEY $SSH_USER@$SSH_HOST:$REMOTE_DIR/client.key $LOCAL_DIR/
-scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.minikube/ca.crt $LOCAL_DIR/
-scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.kube/config $LOCAL_DIR/
+# scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.minikube/ca.crt $LOCAL_DIR/
+# scp -i $SSH_KEY $SSH_USER@$SSH_HOST:/home/ec2-user/.kube/config $LOCAL_DIR/
 
 echo "Files downloaded to $LOCAL_DIR"

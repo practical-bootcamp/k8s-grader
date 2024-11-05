@@ -48,3 +48,13 @@ For more information on how to make the Minikube dashboard accessible on all IPs
 kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
 minikube dashboard --url
 ```
+
+Sample Data
+```
+{
+ "email": "cywong@vtc.edu.hk",
+ "client_certificate": "-----BEGIN RSA PRIVATE KEY-----XXX-----END RSA PRIVATE KEY-----\n",
+ "client_key": "-----BEGIN CERTIFICATE-----XX-----END CERTIFICATE-----\n",
+ "endpoint": "http://3.90.40.12:8001"
+}
+```
