@@ -108,3 +108,6 @@ Outputs:
   SaveK8sAccountApi:
     Description: "API Gateway endpoint URL for Prod stage for Save K8s Account function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
+  GraderApi:
+    Description: "API Gateway endpoint URL for Prod stage for Grader function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
