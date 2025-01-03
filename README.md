@@ -79,3 +79,7 @@ Sample Data
 ```
 sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 ```
+
+To enable auto-completion 
+1. Run ```./create_virtural_env.sh```
+2. Set Python Interpreter to ```./venv/bin/python```

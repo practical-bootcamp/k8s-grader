@@ -3,12 +3,12 @@ import os
 import base64
 import boto3
 import subprocess
-import json
 import tempfile
 
 dynamodb = boto3.resource('dynamodb')
-table_name =  os.environ['K8sAccountTable']
+table_name = os.environ['K8sAccountTable']
 table = dynamodb.Table(table_name)
+
 
 def lambda_handler(event, context):
     email = event.get('queryStringParameters', {}).get('email')
@@ -45,21 +45,25 @@ def lambda_handler(event, context):
 
     kube_config = build_kube_config(client_certificate, client_key, endpoint)
 
-    try:        
-        node_info = get_kube_nodes(kube_config)
+    try:
+        command = '/opt/kubectl/kubectl -o json get nodes'
+        json_result = run_kubectl_command(
+            kube_config, command)
     except Exception:
         return {
             "statusCode": 500,
-            "body": json.dumps({"message": "Error accessing Kubernetes API"})
+            "body": json.dumps({"message": "Error running kubectl command"})
         }
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"nodes": node_info})
+        "body": json.dumps({"nodes": json_result})
     }
 
+
 def build_kube_config(client_certificate, client_key, endpoint):
-    cert_data = base64.b64encode(client_certificate.encode('utf-8')).decode('utf-8')
+    cert_data = base64.b64encode(
+        client_certificate.encode('utf-8')).decode('utf-8')
     key_data = base64.b64encode(client_key.encode('utf-8')).decode('utf-8')
 
     return {
@@ -95,15 +99,15 @@ def build_kube_config(client_certificate, client_key, endpoint):
     }
 
 
-
-def get_kube_nodes(kube_config):
+def run_kubectl_command(kube_config, command):
     with tempfile.NamedTemporaryFile(delete=False) as temp_config:
         temp_config.write(json.dumps(kube_config).encode())
         temp_config.flush()
-        result = subprocess.run(['/opt/kubectl/kubectl', '--kubeconfig', temp_config.name, 'get', 'nodes', '-o', 'json'], capture_output=True, text=True)
+        os.environ['KUBECONFIG'] = temp_config.name
+        result = subprocess.run(
+            command,
+            shell=True, capture_output=True, text=True, check=True
+        )
         print(result.stdout)
-        nodes = json.loads(result.stdout)
-        node_info = [
-            {"name": item['metadata']['name'], "ip": item['status']['addresses'][0]['address']} for item in nodes['items']
-        ]
-    return node_info
+        result = json.loads(result.stdout)
+    return result
