@@ -2,7 +2,9 @@ import json
 import os
 import base64
 import boto3
-from kubernetes import client, config
+import subprocess
+import json
+import tempfile
 
 dynamodb = boto3.resource('dynamodb')
 table_name =  os.environ['K8sAccountTable']
@@ -43,13 +45,8 @@ def lambda_handler(event, context):
 
     kube_config = build_kube_config(client_certificate, client_key, endpoint)
 
-    try:     
-        config.load_kube_config_from_dict(kube_config)
-        v1 = client.CoreV1Api()
-        nodes = v1.list_node()
-        node_info = [
-            {"name": item.metadata.name, "ip": item.status.addresses[0].address} for item in nodes.items
-        ]
+    try:        
+        node_info = get_kube_nodes(kube_config)
     except Exception:
         return {
             "statusCode": 500,
@@ -96,3 +93,17 @@ def build_kube_config(client_certificate, client_key, endpoint):
             }
         ]
     }
+
+
+
+def get_kube_nodes(kube_config):
+    with tempfile.NamedTemporaryFile(delete=False) as temp_config:
+        temp_config.write(json.dumps(kube_config).encode())
+        temp_config.flush()
+        result = subprocess.run(['/opt/kubectl/kubectl', '--kubeconfig', temp_config.name, 'get', 'nodes', '-o', 'json'], capture_output=True, text=True)
+        print(result.stdout)
+        nodes = json.loads(result.stdout)
+        node_info = [
+            {"name": item['metadata']['name'], "ip": item['status']['addresses'][0]['address']} for item in nodes['items']
+        ]
+    return node_info
