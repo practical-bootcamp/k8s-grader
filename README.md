@@ -6,7 +6,7 @@ Automatic Grading Tools for k8s exercises
 
 ### Install the latest AWS SAM.
 ```
-.\aws_sam_setup.sh
+./aws_sam_setup.sh
 ```
 ### Configure AWS Credentials 
 Method 1: Configure AWS Account for AWS Academy Learner Lab 
@@ -35,6 +35,11 @@ After configure the AWS Credentials, then run
 cd k8s/minikube
 aws cloudformation create-stack --stack-name minikube-stack --template-body file://minikube.yaml
 ```
+Describe Stack
+```
+aws cloudformation describe-stacks --stack-name minikube-stack --query 'Stacks[0].Outputs'
+```
+
 Delete Minikube
 ```
 aws cloudformation delete-stack --stack-name minikube-stack
@@ -48,6 +53,7 @@ For more information on how to make the Minikube dashboard accessible on all IPs
 kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
 minikube dashboard --url
 ```
+**To make the API call working, you must start the kubectl proxy!**
 
 Sample Data
 ```
@@ -58,3 +64,22 @@ Sample Data
  "endpoint": "http://3.90.40.12:8001"
 }
 ```
+**Please note that is http but not https!**
+
+## Get the minikube key
+1. Download labsuser.pem from AWS Academy Learner Lan
+2. Upload to k8s/minikube
+3. Open Terminal and run ```chmod 400 labsuser.pem```
+4. Run ```./download_key.sh```
+
+
+## Local Development
+1. update ```env.json```
+2. Run
+```
+sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
+```
+
+To enable auto-completion 
+1. Run ```./create_virtural_env.sh```
+2. Set Python Interpreter to ```./venv/bin/python```
