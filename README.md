@@ -6,7 +6,7 @@ Automatic Grading Tools for k8s exercises
 
 ### Install the latest AWS SAM.
 ```
-.\aws_sam_setup.sh
+./aws_sam_setup.sh
 ```
 ### Configure AWS Credentials 
 Method 1: Configure AWS Account for AWS Academy Learner Lab 
