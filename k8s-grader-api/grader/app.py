@@ -1,9 +1,11 @@
 import json
 import os
-import base64
 import boto3
-import subprocess
-import tempfile
+import shutil
+
+import pytest
+
+os.environ["PATH"] += os.pathsep + "/opt/kubectl/"
 
 dynamodb = boto3.resource('dynamodb')
 account_table_name = os.environ['AccountTable'] \
@@ -43,13 +45,44 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"message": "Incomplete user data"})
         }
+    
+    for filename in os.listdir('/tmp/'):
+        file_path = os.path.join('/tmp/', filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            return {
+                "statusCode": 500,
+                "body": json.dumps({"message": f"Failed to delete {file_path}. Reason: {e}"})
+            }
 
-    kube_config = build_kube_config(client_certificate, client_key, endpoint)
+    with open('/tmp/client_certificate.crt', 'w', encoding='utf-8') as cert_file:
+        cert_file.write(client_certificate)
+    with open('/tmp/client_key.key', 'w', encoding='utf-8') as key_file:
+        key_file.write(client_key)
+
+    json_input = {
+        "cert_file": '/tmp/client_certificate.crt',
+        "key_file": '/tmp/client_key.key',
+        "host": endpoint
+    }
+    with open('/tmp/json_input.json', 'w', encoding='utf-8') as json_file:
+        json.dump(json_input, json_file)
 
     try:
-        command = '/opt/kubectl/kubectl -o json get nodes'
-        json_result = run_kubectl_command(
-            kube_config, command)
+
+        shutil.copy('k8s-tests.zip', '/tmp/k8s-tests.zip')
+        shutil.unpack_archive('/tmp/k8s-tests.zip', '/tmp/')
+
+        files = os.listdir('/tmp/k8s-tests/unit/game01/')
+        print(files)
+
+        retcode = pytest.main(["-x", "/tmp/k8s-tests"])
+        print(retcode)
+
     except Exception:
         return {
             "statusCode": 500,
@@ -58,57 +91,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"nodes": json_result})
+        "body": retcode
     }
-
-
-def build_kube_config(client_certificate, client_key, endpoint):
-    cert_data = base64.b64encode(
-        client_certificate.encode('utf-8')).decode('utf-8')
-    key_data = base64.b64encode(client_key.encode('utf-8')).decode('utf-8')
-
-    return {
-        "apiVersion": "v1",
-        "kind": "Config",
-        "clusters": [
-            {
-                "name": "k8s-cluster",
-                "cluster": {
-                    "server": endpoint
-                }
-            }
-        ],
-        "contexts": [
-            {
-                "name": "k8s-context",
-                "context": {
-                    "cluster": "k8s-cluster",
-                    "user": "k8s-user"
-                }
-            }
-        ],
-        "current-context": "k8s-context",
-        "users": [
-            {
-                "name": "k8s-user",
-                "user": {
-                    "client-certificate-data": cert_data,
-                    "client-key-data": key_data
-                }
-            }
-        ]
-    }
-
-
-def run_kubectl_command(kube_config, command):
-    with tempfile.NamedTemporaryFile(delete=False) as temp_config:
-        temp_config.write(json.dumps(kube_config).encode())
-        temp_config.flush()
-        os.environ['KUBECONFIG'] = temp_config.name
-        result = subprocess.run(
-            command,
-            shell=True, capture_output=True, text=True, check=True
-        )
-        print(result.stdout)
-        result = json.loads(result.stdout)
-    return result

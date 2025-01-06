@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 k8s/minikube/labsuser.pem
 k8s/minikube/downloaded_files/**
+kubectl

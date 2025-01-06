@@ -52,6 +52,4 @@ def run_kubectl_command(kube_config, command):
             command,
             shell=True, capture_output=True, text=True, check=True
         )
-        print(result.stdout)
-        result = json.loads(result.stdout)
-    return result
+    return result.stdout

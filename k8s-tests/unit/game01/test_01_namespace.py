@@ -1,28 +1,19 @@
 
-
-import os
-import sys
-import pytest
+from ..kubectrl_helper import build_kube_config, run_kubectl_command
 from kubernetes import client
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from kubectrl_helper import build_kube_config, run_kubectl_command
-
-@pytest.fixture(scope="module")
-def k8s_configuration():
-    return {
-        "cert_file": os.path.expanduser('~/k8s/minikube/downloaded_files/client.crt'),
-        "key_file": os.path.expanduser('~/k8s/minikube/downloaded_files/client.key'),
-        "host": "http://18.206.231.147:8001/"
-    }
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
-def test_namespace_exists(k8s_configuration):
+def test_namespace_exists_with_library(json_input):
+
     # Method 1 - kubernetes client
     client_configuration = client.Configuration()
-    client_configuration.host = k8s_configuration["host"]
-    client_configuration.cert_file = k8s_configuration["cert_file"]
-    client_configuration.key_file = k8s_configuration["key_file"]
+    client_configuration.host = json_input["host"]
+    client_configuration.cert_file = json_input["cert_file"]
+    client_configuration.key_file = json_input["key_file"]
+
+    logging.debug(json_input)
 
     # Apply the configuration
     client.Configuration.set_default(client_configuration)
@@ -33,13 +24,12 @@ def test_namespace_exists(k8s_configuration):
     namespace_names = [ns.metadata.name for ns in namespaces.items]
     assert namespace in namespace_names, f"Namespace '{namespace}' does not exist"
 
+def test_namespace_exists_with_kubectl(json_input):
     # method 2 - kubectl
-    # command = f"kubectl get namespace {namespace}"
-    # result = os.system(command)
-    # assert result == 0, f"Namespace '{namespace}' does not exist"
-
     kube_config = build_kube_config(
-        k8s_configuration["cert_file"], k8s_configuration["key_file"], k8s_configuration["host"])
-    command = '/opt/kubectl/kubectl -o json get nodes'
-    json_result = run_kubectl_command(kube_config, command)
-    print(json_result)
+        json_input["cert_file"], json_input["key_file"], json_input["host"])
+    command = 'kubectl get namespace'
+    result = run_kubectl_command(kube_config, command)
+    logging.info(result)
+    namespace = "default"
+    assert namespace in result, f"Namespace '{namespace}' does not exist"

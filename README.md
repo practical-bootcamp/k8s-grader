@@ -83,3 +83,10 @@ sam build && sam local invoke GraderFunction --event events/event.json --env-var
 To enable auto-completion 
 1. Run ```./create_virtural_env.sh```
 2. Set Python Interpreter to ```./venv/bin/python```
+
+Run unit test Install Kubectl command tools
+https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+
+```
+rm k8s-tests.zip &&  zip -r k8s-tests.zip k8s-tests -x "*/__pycache__/*" && cp k8s-tests.zip k8s-grader-api/grader/
+```
