@@ -2,5 +2,8 @@
     "python.testing.pytestArgs": [       
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "python.analysis.extraPaths": [
+        "./k8s-grader-api/common-layer"
+    ]
 }

@@ -69,6 +69,19 @@ Resources:
         - python3.11
     Metadata:
       BuildMethod: makefile   # Required to have AWS SAM build this layer
+  
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+        LayerName: CommonLayer
+        Description: Dependencies required for my Python lambdas
+        ContentUri: common-layer/
+        CompatibleRuntimes:
+          - python3.11
+        LicenseInfo: 'Apache License 2.0'        
+    Metadata: 
+        BuildMethod: python3.11
+
 
   GameTaskFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -81,6 +94,7 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
       Environment:
         Variables:
           AccountTable: !Ref AccountTable
@@ -105,6 +119,7 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
       Environment:
         Variables:
           AccountTable: !Ref AccountTable
@@ -129,6 +144,7 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
       Environment:
         Variables:
           AccountTable: !Ref AccountTable
