@@ -11,9 +11,46 @@ Globals:
 
 Resources:
 
-  K8sAccountTable:
+  AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:
+      TableName: AccountTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  GameTaskTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: GameTaskTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  SessionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: SessionTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  ScoreTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ScoreTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
@@ -44,6 +81,12 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+      Environment:
+        Variables:
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          ScoreTable: !Ref ScoreTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -64,7 +107,10 @@ Resources:
         - !Ref LibLayer
       Environment:
         Variables:
-          K8sAccountTable: !Ref K8sAccountTable
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          ScoreTable: !Ref ScoreTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -85,7 +131,7 @@ Resources:
         - !Ref LibLayer
       Environment:
         Variables:
-          K8sAccountTable: !Ref K8sAccountTable
+          AccountTable: !Ref AccountTable
       Events:
         GameTaskGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api

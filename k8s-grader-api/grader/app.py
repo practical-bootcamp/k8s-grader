@@ -6,8 +6,9 @@ import subprocess
 import tempfile
 
 dynamodb = boto3.resource('dynamodb')
-table_name = os.environ['K8sAccountTable']
-table = dynamodb.Table(table_name)
+account_table_name = os.environ['AccountTable'] \
+    if 'AccountTable' in os.environ else 'AccountTable'
+account_table = dynamodb.Table(account_table_name)
 
 
 def lambda_handler(event, context):
@@ -19,7 +20,7 @@ def lambda_handler(event, context):
         }
 
     try:
-        response = table.get_item(Key={'email': email})
+        response = account_table.get_item(Key={'email': email})
     except Exception:
         return {
             "statusCode": 500,

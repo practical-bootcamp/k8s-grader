@@ -1,3 +1,4 @@
 requests
 kubernetes
 boto3
+pytest
