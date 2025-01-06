@@ -1,10 +1,6 @@
 {
-    "python.testing.pytestArgs": [
-        "k8s-tests"
+    "python.testing.pytestArgs": [       
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.analysis.extraPaths": [
-        "./k8s-tests/unit"
-    ]
+    "python.testing.pytestEnabled": true
 }

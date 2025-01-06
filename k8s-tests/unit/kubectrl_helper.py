@@ -4,7 +4,6 @@ import os
 import subprocess
 import tempfile
 
-
 def build_kube_config(client_certificate, client_key, endpoint):
     cert_data = base64.b64encode(
         client_certificate.encode('utf-8')).decode('utf-8')
