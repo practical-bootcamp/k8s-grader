@@ -2,21 +2,28 @@
 	"image": "mcr.microsoft.com/devcontainers/python:3.11",
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
 	},
 	"hostRequirements": {
 		"cpus": 4
 	},
-	"waitFor": "onCreateCommand",
-	"updateContentCommand": "python3 -m pip install -r requirements.txt",
-	"postCreateCommand": "",
 	"customizations": {
 		"codespaces": {
 			"openFiles": []
 		},
 		"vscode": {
 			"settings": {
-				"python.defaultInterpreterPath": "~/.python/current/bin/python3"
+				"python.defaultInterpreterPath": "/workspaces/k8s-grader/venv/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+				"python.linting.flake8Enabled": true,
+				"python.testing.pytestArgs": [],
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,
+				"python.analysis.extraPaths": [
+					"./k8s-grader-api/common-layer"
+				]
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
@@ -28,12 +35,6 @@
 				"ms-toolsai.jupyter",
 				"GitHub.copilot"
 			]
-		},
-		"settings": {
-			"python.defaultInterpreterPath": "~/.python/current/bin/python3",
-			"python.linting.enabled": true,
-			"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-			"python.linting.flake8Enabled": true
 		}
 	}
 }

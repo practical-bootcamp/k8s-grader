@@ -87,11 +87,6 @@ https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
 
 ### Run test
-1. copy the latest test code for grader lambda functon.
-```
-rm k8s-tests.zip &&  zip -r k8s-tests.zip k8s-tests -x "*/__pycache__/*" && cp k8s-tests.zip k8s-grader-api/grader/
-```
-2. Run 
 ```
 sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 ```
