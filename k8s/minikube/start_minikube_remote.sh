@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-SSH_HOST="3.82.190.80"
+SSH_HOST="18.206.231.147"
 SSH_KEY="labsuser.pem"
 SSH_USER="ec2-user"
 

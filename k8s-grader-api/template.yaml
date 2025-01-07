@@ -6,14 +6,51 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 15
-    MemorySize: 128
+    Timeout: 29
+    MemorySize: 512
 
 Resources:
 
-  K8sAccountTable:
+  AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:
+      TableName: AccountTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  GameTaskTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: GameTaskTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  SessionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: SessionTable
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+
+  ScoreTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ScoreTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
@@ -32,6 +69,19 @@ Resources:
         - python3.11
     Metadata:
       BuildMethod: makefile   # Required to have AWS SAM build this layer
+  
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+        LayerName: CommonLayer
+        Description: Dependencies required for my Python lambdas
+        ContentUri: common-layer/
+        CompatibleRuntimes:
+          - python3.11
+        LicenseInfo: 'Apache License 2.0'        
+    Metadata: 
+        BuildMethod: python3.11
+
 
   GameTaskFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -44,6 +94,13 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
+      Environment:
+        Variables:
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          ScoreTable: !Ref ScoreTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -62,9 +119,13 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
       Environment:
         Variables:
-          K8sAccountTable: !Ref K8sAccountTable
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          ScoreTable: !Ref ScoreTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -83,9 +144,10 @@ Resources:
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref LibLayer
+        - !Ref CommonLayer
       Environment:
         Variables:
-          K8sAccountTable: !Ref K8sAccountTable
+          AccountTable: !Ref AccountTable
       Events:
         GameTaskGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api

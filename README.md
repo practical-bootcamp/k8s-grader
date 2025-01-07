@@ -74,12 +74,24 @@ Sample Data
 
 
 ## Local Development
-1. update ```env.json```
-2. Run
-```
-sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
-```
 
 To enable auto-completion 
 1. Run ```./create_virtural_env.sh```
 2. Set Python Interpreter to ```./venv/bin/python```
+
+Install Kubectl command tools for Unit Test
+https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+
+1. Update IP address in ```k8s/minikube/endpoint.txt```
+2. Update IP address and run ```k8s/minikube/download_key.sh```
+
+
+### Run test
+1. copy the latest test code for grader lambda functon.
+```
+rm k8s-tests.zip &&  zip -r k8s-tests.zip k8s-tests -x "*/__pycache__/*" && cp k8s-tests.zip k8s-grader-api/grader/
+```
+2. Run 
+```
+sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
+```
