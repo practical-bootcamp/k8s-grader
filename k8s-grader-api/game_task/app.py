@@ -1,22 +1,22 @@
+import json
+import logging
+import os
+
+from common.database import (
+    get_email_from_event,
+    get_game_session,
+    get_tasks_by_email_and_game,
+    get_user_data,
+    save_game_session,
+)
+from common.file import clear_tmp_directory, create_json_input, write_user_files
 from common.pytest import (
+    GamePhase,
     TestResult,
     get_current_task,
     get_instruction,
     run_tests,
-    GamePhase,
 )
-from common.database import (
-    get_email_from_event,
-    get_game_session,
-    get_user_data,
-    get_tasks_by_email_and_game,
-    save_game_session,
-)
-from common.file import clear_tmp_directory, write_user_files, create_json_input
-import json
-import os
-import logging
-
 from common.session import generate_session
 
 logger = logging.getLogger(__name__)

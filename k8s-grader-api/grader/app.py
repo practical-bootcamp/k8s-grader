@@ -1,4 +1,7 @@
-from common.pytest import TestResult, get_current_task, run_tests, GamePhase
+import json
+import logging
+import os
+
 from common.database import (
     get_email_from_event,
     get_game_session,
@@ -6,11 +9,8 @@ from common.database import (
     get_user_data,
     save_game_task,
 )
-from common.file import clear_tmp_directory, write_user_files, create_json_input
-import json
-import os
-import logging
-
+from common.file import clear_tmp_directory, create_json_input, write_user_files
+from common.pytest import GamePhase, TestResult, get_current_task, run_tests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

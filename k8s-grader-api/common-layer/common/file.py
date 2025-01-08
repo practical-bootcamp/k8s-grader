@@ -22,7 +22,9 @@ def write_user_files(client_certificate, client_key):
         key_file.write(client_key)
 
 
-def create_json_input(endpoint, extra_data={}):
+def create_json_input(endpoint, extra_data=None):
+    if extra_data is None:
+        extra_data = {}
     json_input = {
         "cert_file": "/tmp/client_certificate.crt",
         "key_file": "/tmp/client_key.key",

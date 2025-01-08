@@ -1,6 +1,7 @@
-from jinja2 import Environment
-from common.pytest import get_session_template
 import random
+
+from common.pytest import get_session_template
+from jinja2 import Environment
 from names_generator import generate_name
 
 

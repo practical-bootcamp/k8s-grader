@@ -1,6 +1,7 @@
 import json
 import os
 import time
+
 import boto3
 from boto3.dynamodb.conditions import Key
 

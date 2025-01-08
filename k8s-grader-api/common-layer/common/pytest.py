@@ -1,10 +1,11 @@
 import json
-import shutil
-import pytest
-from enum import Enum
 import os
+import shutil
 import threading
 import urllib.request
+from enum import Enum
+
+import pytest
 
 
 class GamePhase(Enum):
