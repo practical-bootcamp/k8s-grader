@@ -26,38 +26,50 @@ Resources:
   GameTaskTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: GameTaskTable
+      # TableName: GameTaskTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
           AttributeType: "S"
+        - AttributeName: "game"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "email"
           KeyType: "HASH"
+        - AttributeName: "game"
+          KeyType: "RANGE"
 
   SessionTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: SessionTable
+      # TableName: SessionTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
           AttributeType: "S"
+        - AttributeName: "game"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "email"
           KeyType: "HASH"
+        - AttributeName: "game"
+          KeyType: "RANGE"
 
   ScoreTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ScoreTable
+      # TableName: ScoreTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
           AttributeType: "S"
+        - AttributeName: "game"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "email"
           KeyType: "HASH"
+        - AttributeName: "game"
+          KeyType: "RANGE"
 
   LibLayer:
     Type: AWS::Serverless::LayerVersion
@@ -81,7 +93,6 @@ Resources:
         LicenseInfo: 'Apache License 2.0'        
     Metadata: 
         BuildMethod: python3.11
-
 
   GameTaskFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -173,3 +184,15 @@ Outputs:
   GraderApi:
     Description: "API Gateway endpoint URL for Prod stage for Grader function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+  AccountTable:
+    Description: "Name of the AccountTable"
+    Value: !Ref AccountTable
+  GameTaskTable:
+    Description: "Name of the GameTaskTable"
+    Value: !Ref GameTaskTable
+  SessionTable:
+    Description: "Name of the SessionTable"
+    Value: !Ref SessionTable
+  ScoreTable:
+    Description: "Name of the ScoreTable"
+    Value: !Ref ScoreTable

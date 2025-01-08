@@ -2,3 +2,7 @@ requests
 kubernetes
 boto3
 pytest
+pytest-order
+pytest-html
+names_generator
+Jinja2

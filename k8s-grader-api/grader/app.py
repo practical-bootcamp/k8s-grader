@@ -1,57 +1,97 @@
 import json
+import logging
 import os
-import shutil
-import pytest
 
-from common.helper import get_email_from_event, get_user_data, clear_tmp_directory, write_user_files, create_json_input
+from common.database import (
+    get_email_from_event,
+    get_game_session,
+    get_tasks_by_email_and_game,
+    get_user_data,
+    save_game_task,
+)
+from common.file import clear_tmp_directory, create_json_input, write_user_files
+from common.pytest import GamePhase, TestResult, get_current_task, run_tests
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 os.environ["PATH"] += os.pathsep + "/opt/kubectl/"
 os.environ["PATH"] += os.pathsep + "/opt/helm/"
 
 
-def run_tests():
-    shutil.copy('k8s-tests.zip', '/tmp/k8s-tests.zip')
-    shutil.unpack_archive('/tmp/k8s-tests.zip', '/tmp/')
-    return pytest.main(["-x", "/tmp/k8s-tests"])
-
-
 def lambda_handler(event, context):
+
     email = get_email_from_event(event)
-    if not email:
+    game = event.get("queryStringParameters", {}).get("game")
+    if not email or not game:
         return {
-            "statusCode": 400,
-            "body": json.dumps({"message": "Email parameter is missing"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "Email and Game parameter is missing"}
+            ),
         }
 
     user_data = get_user_data(email)
     if not user_data:
         return {
-            "statusCode": 404,
-            "body": json.dumps({"message": "Email not found in the database"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "Email not found in the database"}
+            ),
         }
-
-    client_certificate = user_data.get('client_certificate')
-    client_key = user_data.get('client_key')
-    endpoint = user_data.get('endpoint')
+    client_certificate = user_data.get("client_certificate")
+    client_key = user_data.get("client_key")
+    endpoint = user_data.get("endpoint")
 
     if not all([client_certificate, client_key, endpoint]):
         return {
-            "statusCode": 500,
-            "body": json.dumps({"message": "Incomplete user data"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "K8s confdential is missing"}
+            ),
         }
+    clear_tmp_directory()
+    write_user_files(client_certificate, client_key)
+
+    finished_tasks = get_tasks_by_email_and_game(email, game)
+    current_task = get_current_task(game, finished_tasks)
+    logger.info(current_task)
+    session = get_game_session(email, game, current_task)
+    if session is None:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"status": "Error", "message": "Session not found"}),
+        }
+    logger.info(session)
 
     try:
-        clear_tmp_directory()
-        write_user_files(client_certificate, client_key)
-        create_json_input(endpoint, {"namespace": "demo"})
-        retcode = run_tests()
+        create_json_input(endpoint, session)
+        test_result = run_tests(GamePhase.CHECK, game, current_task)
+        # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
+        #     report_content = report.read()
+        if test_result == TestResult.OK:
+            save_game_task(email, game, current_task)
+            run_tests(GamePhase.CLEANUP, game, current_task)
     except Exception as e:
         return {
-            "statusCode": 500,
-            "body": json.dumps({"message": str(e)})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": f"{type(e).__name__}: {str(e)}"}
+            ),
+        }
+
+    if test_result == TestResult.OK:
+        return {
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": test_result.name, "message": "Task Completed!"}
+            ),
         }
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"retcode": retcode})
+        "body": json.dumps(
+            {"status": test_result.name, "message": "Something is wrong!"}
+        ),
     }

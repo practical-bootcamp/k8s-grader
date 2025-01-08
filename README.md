@@ -70,7 +70,12 @@ Sample Data
 1. Download labsuser.pem from AWS Academy Learner Lan
 2. Upload to k8s/minikube
 3. Open Terminal and run ```chmod 400 labsuser.pem```
-4. Run ```./download_key.sh```
+4. Update IP address in ```k8s/minikube/endpoint.txt```
+5. Run 
+```
+cd k8s/minikube
+./download_key.sh
+```
 
 
 ## Local Development
@@ -83,15 +88,18 @@ Install Kubectl command tools for Unit Test
 https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
 1. Update IP address in ```k8s/minikube/endpoint.txt```
-2. Update IP address and run ```k8s/minikube/download_key.sh```
+2. Run ```./check_minikube_status.sh``` to ensure minikube us running.
+3. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
 
 
-### Run test
-1. copy the latest test code for grader lambda functon.
+### Run Local Lambda test
+For the first time, generate the env.json.
 ```
-rm k8s-tests.zip &&  zip -r k8s-tests.zip k8s-tests -x "*/__pycache__/*" && cp k8s-tests.zip k8s-grader-api/grader/
+cd k8s-grader-api/events
+python set_env.py
 ```
-2. Run 
+
 ```
+sam build && sam local invoke GameTaskFunction --event events/event.json --env-vars events/env.json
 sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 ```
