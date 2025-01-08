@@ -1,5 +1,5 @@
-from common.pytest import run_tests, GamePhase
-from common.database import get_email_from_event, get_user_data
+from common.pytest import get_current_task, run_tests, GamePhase
+from common.database import get_email_from_event, get_game_session, get_tasks_by_email_and_game, get_user_data
 from common.file import clear_tmp_directory, write_user_files, create_json_input
 import json
 import os
@@ -16,6 +16,7 @@ os.environ["PATH"] += os.pathsep + "/opt/helm/"
 def lambda_handler(event, context):
 
     email = get_email_from_event(event)
+    game = event.get('queryStringParameters', {}).get('game')
     if not email:
         return {
             "statusCode": 400,
@@ -40,6 +41,17 @@ def lambda_handler(event, context):
         }
     clear_tmp_directory()
     write_user_files(client_certificate, client_key)
+
+    finished_tasks = get_tasks_by_email_and_game(email, game)
+    current_task = get_current_task(game, finished_tasks)
+    logger.info(current_task)
+    session = get_game_session(email, game, current_task)
+    if session is None:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Sesson is missing"})
+        }
+    logger.info(session)
 
     try:
         create_json_input(endpoint, {"namespace": "demo"})

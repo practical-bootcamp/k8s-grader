@@ -1,3 +1,4 @@
+import json
 import shutil
 import pytest
 from enum import Enum
@@ -35,3 +36,30 @@ def get_tasks(game: str):
         if file.endswith(".md"):
             tasks.append(file.replace("test_", "").replace(".md", ""))
     return tasks
+
+
+def get_session_template(game: str, task: str):
+    get_tests()
+    session = {}
+    game_session_file = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/session.json"
+    task_session_file = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/test_{task}.json"
+    if os.path.exists(game_session_file):
+        with open(game_session_file, 'r', encoding='utf-8') as file:
+            game_session = json.load(file)
+            session.update(game_session)
+    if os.path.exists(task_session_file):
+        with open(task_session_file, 'r', encoding='utf-8') as file:
+            task_session = json.load(file)
+            session.update(task_session)
+
+    return session
+
+
+def get_current_task(game, finished_tasks):
+    all_tasks = get_tasks(game)
+    current_task = None
+    for task in all_tasks:
+        if task not in [task for task in finished_tasks]:
+            current_task = task
+            break
+    return current_task

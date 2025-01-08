@@ -1,9 +1,11 @@
-from common.pytest import run_tests, GamePhase
-from common.database import get_email_from_event, get_user_data
+from common.pytest import get_current_task, run_tests, GamePhase, get_tasks, get_session_template
+from common.database import get_email_from_event, get_game_session, get_user_data, get_tasks_by_email_and_game, save_game_session, save_game_task
 from common.file import clear_tmp_directory, write_user_files, create_json_input
 import json
 import os
 import logging
+
+from common.session import generate_session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,11 +18,23 @@ os.environ["PATH"] += os.pathsep + "/opt/helm/"
 def lambda_handler(event, context):
 
     email = get_email_from_event(event)
-    if not email:
+    game = event.get('queryStringParameters', {}).get('game')
+    if not email or not game:
         return {
             "statusCode": 400,
-            "body": json.dumps({"message": "Email parameter is missing"})
+            "body": json.dumps({"message": "Email and Game parameter is missing"})
         }
+
+    finished_tasks = get_tasks_by_email_and_game(email, game)
+    current_task = get_current_task(game, finished_tasks)
+    logger.info(current_task)
+    session = get_game_session(email, game, current_task)
+    if session is None:
+        session = generate_session(email, game, current_task)
+        save_game_session(email, game, current_task, session)
+    logger.info(session)
+
+    # save_game_task(email, game, the_next_task)
 
     user_data = get_user_data(email)
     if not user_data:
@@ -42,11 +56,11 @@ def lambda_handler(event, context):
     write_user_files(client_certificate, client_key)
 
     try:
-        create_json_input(endpoint, {"namespace": "demo"})
-        retcode = run_tests(GamePhase.CHECK, "game01",
-                            "test_02_create_namespace.py")
-        with open('/tmp/report.html', 'r', encoding="utf-8") as report:
-            report_content = report.read()
+        create_json_input(endpoint, session)
+        retcode = run_tests(GamePhase.SETUP, game,
+                            f"test_{current_task}.py")
+        # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
+        #     report_content = report.read()
     except (OSError, IOError) as e:
         return {
             "statusCode": 500,
@@ -60,5 +74,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"retcode": retcode, "report_content": report_content})
+        "body": json.dumps({"retcode": retcode})
     }
