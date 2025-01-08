@@ -5,8 +5,9 @@ import json
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 os.environ["PATH"] += os.pathsep + "/opt/kubectl/"
@@ -55,10 +56,10 @@ def lambda_handler(event, context):
 
     try:
         create_json_input(endpoint, {"namespace": "demo"})
-        retcode = run_tests(GamePhase.CHECK, "game01",
-                            "test_02_create_namespace.py")
-        with open('/tmp/report.html', 'r', encoding="utf-8") as report:
-            report_content = report.read()
+        retcode = run_tests(GamePhase.CHECK, game,
+                            current_task)
+        # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
+        #     report_content = report.read()
     except (OSError, IOError) as e:
         return {
             "statusCode": 500,
@@ -72,5 +73,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"retcode": retcode, "report_content": report_content})
+        "body": json.dumps({"retcode": retcode})
     }

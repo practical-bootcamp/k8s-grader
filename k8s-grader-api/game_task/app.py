@@ -7,8 +7,8 @@ import logging
 
 from common.session import generate_session
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 os.environ["PATH"] += os.pathsep + "/opt/kubectl/"
@@ -58,7 +58,7 @@ def lambda_handler(event, context):
     try:
         create_json_input(endpoint, session)
         retcode = run_tests(GamePhase.SETUP, game,
-                            f"test_{current_task}.py")
+                            current_task)
         # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
         #     report_content = report.read()
     except (OSError, IOError) as e:

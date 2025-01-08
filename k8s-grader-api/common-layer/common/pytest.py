@@ -3,6 +3,8 @@ import shutil
 import pytest
 from enum import Enum
 import os
+import subprocess
+import threading
 import urllib.request
 
 
@@ -15,9 +17,22 @@ class GamePhase(Enum):
 TEST_BASE_PATH = "/tmp/k8s-game-rule-main/k8s-tests/"
 
 
-def run_tests(test_phase: GamePhase, game: str, task: str):
+def run_tests(test_phase: GamePhase, game: str, current_task: str):
     get_tests()
-    return pytest.main(["--html=/tmp/report.html", "-x", f"{TEST_BASE_PATH}{test_phase.value}/{game}/{task}"])
+
+    def run_pytest():
+        nonlocal retcode
+        retcode = pytest.main(["--html=/tmp/report.html", "-x",
+                              f"{TEST_BASE_PATH}{test_phase.value}/{game}/test_{current_task}.py"])
+
+    retcode = 0
+    thread = threading.Thread(target=run_pytest)
+    thread.start()
+    thread.join(timeout=25)
+
+    if thread.is_alive():
+        retcode = 6
+    return retcode
 
 
 def get_tests():

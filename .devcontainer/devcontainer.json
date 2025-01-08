@@ -23,6 +23,9 @@
 				"python.testing.pytestEnabled": true,
 				"python.analysis.extraPaths": [
 					"./k8s-grader-api/common-layer"
+				],
+				"python.linting.pylintArgs": [
+					"--disable=C0116"
 				]
 			},
 			// Add the IDs of extensions you want installed when the container is created.

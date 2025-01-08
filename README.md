@@ -70,7 +70,12 @@ Sample Data
 1. Download labsuser.pem from AWS Academy Learner Lan
 2. Upload to k8s/minikube
 3. Open Terminal and run ```chmod 400 labsuser.pem```
-4. Run ```./download_key.sh```
+4. Update IP address in ```k8s/minikube/endpoint.txt```
+5. Run 
+```
+cd k8s/minikube
+./download_key.sh
+```
 
 
 ## Local Development
@@ -83,7 +88,8 @@ Install Kubectl command tools for Unit Test
 https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
 1. Update IP address in ```k8s/minikube/endpoint.txt```
-2. Update IP address and run ```k8s/minikube/download_key.sh```
+2. Run ```./check_minikube_status.sh``` to ensure minikube us running.
+3. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
 
 
 ### Run Local Lambda test
