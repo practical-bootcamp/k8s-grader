@@ -5,7 +5,8 @@
   "httpMethod": "GET",
   "isBase64Encoded": false,
   "queryStringParameters": {
-    "email": "cywong@vtc.edu.hk"
+    "email": "cywong@vtc.edu.hk",
+    "game": "game01"
   },
   "pathParameters": {
     "proxy": "/path/to/resource"

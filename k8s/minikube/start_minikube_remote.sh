@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-SSH_HOST="18.206.231.147"
+SSH_HOST=$(cat endpoint.txt | awk -F[/:] '{print $4}')
 SSH_KEY="labsuser.pem"
 SSH_USER="ec2-user"
 

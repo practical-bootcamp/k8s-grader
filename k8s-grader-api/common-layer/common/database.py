@@ -2,8 +2,11 @@ import os
 import boto3
 
 dynamodb = boto3.resource('dynamodb')
-account_table_name = os.getenv('AccountTable', 'AccountTable')
-account_table = dynamodb.Table(account_table_name)
+
+account_table = dynamodb.Table(os.getenv('AccountTable'))
+game_task_table = dynamodb.Table(os.getenv('GameTaskTable'))
+score_table = dynamodb.Table(os.getenv('ScoreTable'))
+session_table = dynamodb.Table(os.getenv('SessionTable'))
 
 
 def get_email_from_event(event):
@@ -16,3 +19,17 @@ def get_user_data(email):
         return response.get('Item')
     except Exception:
         return None
+
+
+def get_game_tasks_by_email_and_game(email, game):
+
+    response = game_task_table.query(
+        KeyConditionExpression='email = :email and begins_with(game, :game)',
+        ExpressionAttributeValues={
+            ':email': email,
+            ':game': f'{game}#'
+        },
+        # This will sort the results by the game attribute in ascending order
+        ScanIndexForward=True
+    )
+    return response.get('Items')

@@ -184,15 +184,15 @@ Outputs:
   GraderApi:
     Description: "API Gateway endpoint URL for Prod stage for Grader function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
-  AccountTableName:
+  AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
-  GameTaskTableName:
+  GameTaskTable:
     Description: "Name of the GameTaskTable"
     Value: !Ref GameTaskTable
-  SessionTableName:
+  SessionTable:
     Description: "Name of the SessionTable"
     Value: !Ref SessionTable
-  ScoreTableName:
+  ScoreTable:
     Description: "Name of the ScoreTable"
     Value: !Ref ScoreTable

@@ -21,13 +21,15 @@ def run_tests(test_phase: GamePhase, game: str, task: str):
 
 def get_tests():
     # TODO: Change this to S3 bucket download
-    url = "https://github.com/wongcyrus/k8s-game-rule/archive/refs/heads/main.zip"
-    urllib.request.urlretrieve(url, "/tmp/k8s-game-rule-main.zip")
-    shutil.unpack_archive('/tmp/k8s-game-rule-main.zip', '/tmp/')
+    if not os.path.exists("/tmp/k8s-game-rule-main.zip"):
+        url = "https://github.com/wongcyrus/k8s-game-rule/archive/refs/heads/main.zip"
+        urllib.request.urlretrieve(url, "/tmp/k8s-game-rule-main.zip")
+        shutil.unpack_archive('/tmp/k8s-game-rule-main.zip', '/tmp/')
 
 
 def get_tasks(game: str):
-    folder = f"{TEST_BASE_PATH}{GamePhase.SETUP}/{game}/"
+    get_tests()
+    folder = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/"
     tasks = []
     for file in os.listdir(folder):
         if file.endswith(".md"):
