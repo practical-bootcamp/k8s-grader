@@ -86,7 +86,14 @@ https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 2. Update IP address and run ```k8s/minikube/download_key.sh```
 
 
-### Run test
+### Run Local Lambda test
+For the first time, generate the env.json.
+```
+cd k8s-grader-api/events
+python set_env.py
+```
+
 ```
 sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
+sam build && sam local invoke GameTaskFunction --event events/event.json --env-vars events/env.json
 ```
