@@ -100,6 +100,6 @@ python set_env.py
 ```
 
 ```
-sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 sam build && sam local invoke GameTaskFunction --event events/event.json --env-vars events/env.json
+sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 ```

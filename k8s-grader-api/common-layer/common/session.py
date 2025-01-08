@@ -24,14 +24,15 @@ def render(template, func_dict):
 def generate_session(email: str, game: str, task: str) -> dict:
     session = get_session_template(game, task)
 
-    student_id = email.split('@')[0]
+    student_id = email.split("@")[0]
     func_dict = {
         "student_id": lambda: student_id,
         "random_name": lambda: random_name(student_id),
-        "random_number": lambda f, to: random_number(f, to, student_id)
+        "random_number": lambda f, to: random_number(f, to, student_id),
     }
 
-    session = {k: render(v, func_dict) if isinstance(
-        v, str) else v for k, v in session.items()}
+    session = {
+        k: render(v, func_dict) if isinstance(v, str) else v for k, v in session.items()
+    }
 
     return session

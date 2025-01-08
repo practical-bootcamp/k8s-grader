@@ -4,8 +4,8 @@ import shutil
 
 
 def clear_tmp_directory():
-    for filename in os.listdir('/tmp/'):
-        file_path = os.path.join('/tmp/', filename)
+    for filename in os.listdir("/tmp/"):
+        file_path = os.path.join("/tmp/", filename)
         try:
             if os.path.isfile(file_path) or os.path.islink(file_path):
                 os.unlink(file_path)
@@ -16,18 +16,18 @@ def clear_tmp_directory():
 
 
 def write_user_files(client_certificate, client_key):
-    with open('/tmp/client_certificate.crt', 'w', encoding='utf-8') as cert_file:
+    with open("/tmp/client_certificate.crt", "w", encoding="utf-8") as cert_file:
         cert_file.write(client_certificate)
-    with open('/tmp/client_key.key', 'w', encoding='utf-8') as key_file:
+    with open("/tmp/client_key.key", "w", encoding="utf-8") as key_file:
         key_file.write(client_key)
 
 
 def create_json_input(endpoint, extra_data={}):
     json_input = {
-        "cert_file": '/tmp/client_certificate.crt',
-        "key_file": '/tmp/client_key.key',
-        "host": endpoint
+        "cert_file": "/tmp/client_certificate.crt",
+        "key_file": "/tmp/client_key.key",
+        "host": endpoint,
     }
     json_input.update(extra_data)
-    with open('/tmp/json_input.json', 'w', encoding='utf-8') as json_file:
+    with open("/tmp/json_input.json", "w", encoding="utf-8") as json_file:
         json.dump(json_input, json_file)

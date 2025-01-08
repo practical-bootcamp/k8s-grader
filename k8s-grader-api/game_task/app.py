@@ -1,5 +1,17 @@
-from common.pytest import get_current_task, run_tests, GamePhase, get_tasks, get_session_template
-from common.database import get_email_from_event, get_game_session, get_user_data, get_tasks_by_email_and_game, save_game_session, save_game_task
+from common.pytest import (
+    TestResult,
+    get_current_task,
+    get_instruction,
+    run_tests,
+    GamePhase,
+)
+from common.database import (
+    get_email_from_event,
+    get_game_session,
+    get_user_data,
+    get_tasks_by_email_and_game,
+    save_game_session,
+)
 from common.file import clear_tmp_directory, write_user_files, create_json_input
 import json
 import os
@@ -18,11 +30,13 @@ os.environ["PATH"] += os.pathsep + "/opt/helm/"
 def lambda_handler(event, context):
 
     email = get_email_from_event(event)
-    game = event.get('queryStringParameters', {}).get('game')
+    game = event.get("queryStringParameters", {}).get("game")
     if not email or not game:
         return {
-            "statusCode": 400,
-            "body": json.dumps({"message": "Email and Game parameter is missing"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "Email and Game parameter is missing"}
+            ),
         }
 
     finished_tasks = get_tasks_by_email_and_game(email, game)
@@ -34,45 +48,59 @@ def lambda_handler(event, context):
         save_game_session(email, game, current_task, session)
     logger.info(session)
 
-    # save_game_task(email, game, the_next_task)
+    instruction = get_instruction(game, current_task, session)
+
+    if not instruction:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"status": "Error", "message": "Instruction not found"}),
+        }
 
     user_data = get_user_data(email)
     if not user_data:
         return {
-            "statusCode": 404,
-            "body": json.dumps({"message": "Email not found in the database"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "Email not found in the database"}
+            ),
         }
-
-    client_certificate = user_data.get('client_certificate')
-    client_key = user_data.get('client_key')
-    endpoint = user_data.get('endpoint')
+    client_certificate = user_data.get("client_certificate")
+    client_key = user_data.get("client_key")
+    endpoint = user_data.get("endpoint")
 
     if not all([client_certificate, client_key, endpoint]):
         return {
-            "statusCode": 500,
-            "body": json.dumps({"message": "Incomplete user data"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": "K8s confdential is missing"}
+            ),
         }
     clear_tmp_directory()
     write_user_files(client_certificate, client_key)
 
     try:
         create_json_input(endpoint, session)
-        retcode = run_tests(GamePhase.SETUP, game,
-                            current_task)
+        test_result = run_tests(GamePhase.SETUP, game, current_task)
         # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
         #     report_content = report.read()
-    except (OSError, IOError) as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"message": f"{type(e).__name__}: {str(e)}"})
-        }
+
     except Exception as e:
         return {
-            "statusCode": 500,
-            "body": json.dumps({"message": f"Unexpected error: {type(e).__name__}: {str(e)}"})
+            "statusCode": 200,
+            "body": json.dumps(
+                {"status": "Error", "message": f"{type(e).__name__}: {str(e)}"}
+            ),
+        }
+
+    if test_result == TestResult.OK:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"status": test_result.name, "message": instruction}),
         }
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"retcode": retcode})
+        "body": json.dumps(
+            {"status": test_result.name, "message": "Something is wrong!"}
+        ),
     }
