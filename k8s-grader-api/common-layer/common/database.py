@@ -64,6 +64,10 @@ def save_game_task(email, game, task):
     )
 
 
+def delete_game_task(email, game, task):
+    game_task_table.delete_item(Key={"email": email, "game": f"{game}#{task}"})
+
+
 def save_game_session(email, game, task, session):
     session_table.put_item(
         Item={
@@ -73,6 +77,10 @@ def save_game_session(email, game, task, session):
             "time": int(time.time()),
         }
     )
+
+
+def delete_game_session(email, game, task):
+    session_table.delete_item(Key={"email": email, "game": f"{game}#{task}"})
 
 
 def get_game_session(email, game, task):

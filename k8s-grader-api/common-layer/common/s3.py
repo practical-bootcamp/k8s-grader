@@ -2,13 +2,16 @@ import os
 
 import boto3
 from botocore.exceptions import NoCredentialsError
+from common.pytest import GamePhase
 
 TestResultBucket = os.getenv("TestResultBucket")
 
 
-def upload_test_result(file_name, time, email, game, task):
-    object_name = f"{game}/{email}/{task}/test_report.html"
-    object_name_with_time = f"{game}/{email}/{task}/test_report_{time}.html"
+def upload_test_result(file_name, game_phase: GamePhase, time, email, game, task):
+    object_name = f"{game}/{email}/{task}/a_test_report_{game_phase.name}.html"
+    object_name_with_time = (
+        f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
+    )
 
     # Upload the file
     s3_client = boto3.client("s3")
@@ -31,8 +34,12 @@ def upload_test_result(file_name, time, email, game, task):
     return True
 
 
-def generate_presigned_url(time, email, game, task, expiration=3600):
-    object_name_with_time = f"{game}/{email}/{task}/test_report_{time}.html"
+def generate_presigned_url(
+    game_phase: GamePhase, time, email, game, task, expiration=3600
+):
+    object_name_with_time = (
+        f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
+    )
     # Generate a presigned URL for the S3 object
     s3_client = boto3.client("s3")
     try:

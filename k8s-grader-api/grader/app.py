@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 from common.database import (
+    delete_game_session,
     get_email_from_event,
     get_game_session,
     get_tasks_by_email_and_game,
@@ -66,9 +67,11 @@ def lambda_handler(event, context):
         }
     session = get_game_session(email, game, current_task)
 
+    # In case the key or endpoint is changed, remove the session.
     required_keys = ["$endpoint", "$client_key", "$client_certificate"]
     for key in required_keys:
         if session[key] != locals()[key[1:]]:
+            delete_game_session(email, game, current_task)
             return {
                 "statusCode": 200,
                 "body": json.dumps(
@@ -87,12 +90,25 @@ def lambda_handler(event, context):
         create_json_input(endpoint, session)
         test_result = run_tests(GamePhase.CHECK, game, current_task)
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        upload_test_result("/tmp/report.html", now_str, email, game, current_task)
-        report_url = generate_presigned_url(now_str, email, game, current_task)
+        upload_test_result(
+            "/tmp/report.html", GamePhase.CHECK, now_str, email, game, current_task
+        )
+        report_url = generate_presigned_url(
+            GamePhase.CHECK, now_str, email, game, current_task
+        )
 
         if test_result == TestResult.OK:
             save_game_task(email, game, current_task)
             run_tests(GamePhase.CLEANUP, game, current_task)
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            upload_test_result(
+                "/tmp/report.html",
+                GamePhase.CLEANUP,
+                now_str,
+                email,
+                game,
+                current_task,
+            )
     except Exception as e:
         return {
             "statusCode": 200,

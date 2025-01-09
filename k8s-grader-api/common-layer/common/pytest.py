@@ -36,6 +36,7 @@ def run_tests(test_phase: GamePhase, game: str, current_task: str):
         retcode = pytest.main(
             [
                 "--html=/tmp/report.html",
+                "--self-contained-html",
                 "-x",
                 f"{TEST_BASE_PATH}{test_phase.value}/{game}/test_{current_task}.py",
             ]
