@@ -11,6 +11,9 @@ Globals:
 
 Resources:
 
+  TestResultBucket:
+    Type: AWS::S3::Bucket
+
   AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:      
@@ -122,6 +125,7 @@ Resources:
           SessionTable: !Ref SessionTable
           ScoreTable: !Ref ScoreTable
           GameTaskTable: !Ref GameTaskTable
+          TestResultBucket: !Ref TestResultBucket
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -147,6 +151,7 @@ Resources:
           SessionTable: !Ref SessionTable
           ScoreTable: !Ref ScoreTable
           GameTaskTable: !Ref GameTaskTable
+          TestResultBucket: !Ref TestResultBucket
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -209,3 +214,6 @@ Outputs:
   ScoreTable:
     Description: "Name of the ScoreTable"
     Value: !Ref ScoreTable
+  TestResultBucket:
+    Description: "Name of the TestResultBucket"
+    Value: !Ref TestResultBucket

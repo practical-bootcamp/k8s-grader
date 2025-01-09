@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 
 from common.database import (
     get_email_from_event,
@@ -11,6 +12,7 @@ from common.database import (
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
 from common.pytest import GamePhase, TestResult, get_current_task, run_tests
+from common.s3 import generate_presigned_url, upload_test_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -84,8 +86,10 @@ def lambda_handler(event, context):
     try:
         create_json_input(endpoint, session)
         test_result = run_tests(GamePhase.CHECK, game, current_task)
-        # with open('/tmp/report.html', 'r', encoding="utf-8") as report:
-        #     report_content = report.read()
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        upload_test_result("/tmp/report.html", now_str, email, game, current_task)
+        report_url = generate_presigned_url(now_str, email, game, current_task)
+
         if test_result == TestResult.OK:
             save_game_task(email, game, current_task)
             run_tests(GamePhase.CLEANUP, game, current_task)
@@ -101,13 +105,21 @@ def lambda_handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps(
-                {"status": test_result.name, "message": "Task Completed!"}
+                {
+                    "status": test_result.name,
+                    "message": "Task Completed!",
+                    "report_url": report_url,
+                }
             ),
         }
 
     return {
         "statusCode": 200,
         "body": json.dumps(
-            {"status": test_result.name, "message": "Something is wrong!"}
+            {
+                "status": test_result.name,
+                "message": "Something is wrong!",
+                "report_url": report_url,
+            }
         ),
     }
