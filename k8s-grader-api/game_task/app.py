@@ -42,6 +42,11 @@ def lambda_handler(event, context):
     finished_tasks = get_tasks_by_email_and_game(email, game)
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
+    if not current_task:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"status": "OK", "message": "All tasks are completed"}),
+        }
 
     user_data = get_user_data(email)
     if not user_data:
@@ -65,22 +70,25 @@ def lambda_handler(event, context):
     clear_tmp_directory()
     write_user_files(client_certificate, client_key)
 
+    instruction = None
     session = get_game_session(email, game, current_task)
-
-    instruction = get_instruction(game, current_task, session)
-
-    if not instruction:
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"status": "Error", "message": "Instruction not found"}),
-        }
     if session is None:
         session = generate_session(email, game, current_task)
+        instruction = get_instruction(game, current_task, session)
+        if not instruction:
+            return {
+                "statusCode": 200,
+                "body": json.dumps(
+                    {"status": "Error", "message": "Instruction not found!"}
+                ),
+            }
         session["$instruction"] = instruction
         session["$client_certificate"] = client_certificate
         session["$client_key"] = client_key
         session["$endpoint"] = endpoint
         save_game_session(email, game, current_task, session)
+    else:
+        instruction = session["$instruction"]
     logger.info(session)
 
     try:

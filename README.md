@@ -105,5 +105,5 @@ sam build && sam local invoke GraderFunction --event events/event.json --env-var
 ```
 Test Web API
 ```
-sam build && sam local start-api --env-vars events/env.json
+sam build && sam local start-api --log-file log.txt --warm-containers LAZY --env-vars events/env.json
 ```

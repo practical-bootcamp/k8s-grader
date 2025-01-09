@@ -57,6 +57,11 @@ def lambda_handler(event, context):
     finished_tasks = get_tasks_by_email_and_game(email, game)
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
+    if not current_task:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"status": "OK", "message": "All tasks are completed"}),
+        }
     session = get_game_session(email, game, current_task)
 
     required_keys = ["$endpoint", "$client_key", "$client_certificate"]

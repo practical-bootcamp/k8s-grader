@@ -30,6 +30,7 @@ def save_account(email, endpoint, client_certificate, client_key):
             "endpoint": endpoint,
             "client_certificate": client_certificate,
             "client_key": client_key,
+            "time": int(time.time()),
         }
     )
 
@@ -42,11 +43,8 @@ def get_email_from_event(event):
 
 
 def get_user_data(email):
-    try:
-        response = account_table.get_item(Key={"email": email})
-        return response.get("Item")
-    except dynamodb.meta.client.exceptions.ResourceNotFoundException:
-        return None
+    response = account_table.get_item(Key={"email": email})
+    return response.get("Item")
 
 
 def get_tasks_by_email_and_game(email, game):
