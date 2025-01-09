@@ -1,55 +1,88 @@
-import json
-import os
-import boto3
 import base64
-import cgi
-from io import BytesIO
+import json
+import logging
 
-dynamodb = boto3.resource('dynamodb')
-account_table_name = os.environ['AccountTable'] if 'AccountTable' in os.environ else 'AccountTable'
-account_table = dynamodb.Table(account_table_name)
+from common.database import is_endpoint_exist, save_account
+from requests_toolbelt.multipart import decoder
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
 
     # Check if the HTTP method is GET
-    if event['httpMethod'] == 'GET':
+    if event["httpMethod"] == "GET":
         # Read the content of 'save-account.html'
-        with open('save-account.html', 'r', encoding='utf-8') as f:
+        with open("save-account.html", "r", encoding="utf-8") as f:
             html_content = f.read()
         return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'text/html'},
-            'body': html_content
+            "statusCode": 200,
+            "headers": {"Content-Type": "text/html"},
+            "body": html_content,
         }
-    if event['httpMethod'] == 'POST':
-        content_type = event['headers'].get(
-            'Content-Type') or event['headers'].get('content-type')
-        if content_type.startswith('multipart/form-data'):
-            post_data = base64.b64decode(event['body']) if event.get(
-                'isBase64Encoded') else event['body'].encode('utf-8')
-            environ = {'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': content_type}
-            fs = cgi.FieldStorage(fp=BytesIO(post_data),
-                                  environ=environ, headers=event['headers'])
+    if event["httpMethod"] == "POST":
+        content_type = event["headers"].get("Content-Type") or event["headers"].get(
+            "content-type"
+        )
+        if content_type.startswith("multipart/form-data"):
+            post_data = (
+                base64.b64decode(event["body"])
+                if event.get("isBase64Encoded")
+                else event["body"].encode("utf-8")
+            )
 
-            email = fs.getvalue('email')
-            endpoint = fs.getvalue('endpoint')
-            client_certificate = fs['client-certificate'].file.read()
-            client_key = fs['client-key'].file.read()
+            multipart_data = decoder.MultipartDecoder(post_data, content_type)
+            fs = {}
+            for part in multipart_data.parts:
+                content_disposition = part.headers[b"Content-Disposition"].decode(
+                    "utf-8"
+                )
+                name = content_disposition.split("name=")[1].split(";")[0].strip('"')
+                fs[name] = part
 
-            account_table.put_item(Item={
-                'email': email,
-                'endpoint': endpoint,
-                'client_certificate': client_certificate.decode('utf-8'),
-                'client_key': client_key.decode('utf-8')
-            })
+            email = fs["email"].text
+            endpoint = fs["endpoint"].text
+            client_certificate = fs["client-certificate"].text
+            client_key = fs["client-key"].text
+
+            if not client_certificate or not client_key:
+                return {
+                    "statusCode": 400,
+                    "body": json.dumps(
+                        {"message": "Missing client-certificate or client-key"}
+                    ),
+                }
+
+            # Validate email and endpoint
+            if "@" not in email or "." not in email.split("@")[-1]:
+                return {
+                    "statusCode": 400,
+                    "body": json.dumps({"message": "Invalid email format"}),
+                }
+
+            if not endpoint.startswith("http://") and not endpoint.startswith(
+                "https://"
+            ):
+                return {
+                    "statusCode": 400,
+                    "body": json.dumps({"message": "Invalid endpoint format"}),
+                }
+
+            if is_endpoint_exist(email, endpoint):
+                return {
+                    "statusCode": 400,
+                    "body": json.dumps({"message": "No Sharing K8s cluster"}),
+                }
+
+            save_account(email, endpoint, client_certificate, client_key)
 
             return {
-                'statusCode': 200,
-                'body': json.dumps({'message': 'Data saved successfully'})
+                "statusCode": 200,
+                "body": json.dumps({"message": "Data saved successfully"}),
             }
         else:
             return {
-                'statusCode': 400,
-                'body': json.dumps({'message': 'Unsupported content type'})
+                "statusCode": 400,
+                "body": json.dumps({"message": "Unsupported content type"}),
             }

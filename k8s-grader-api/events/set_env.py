@@ -1,5 +1,6 @@
-import boto3
 import json
+
+import boto3
 
 
 def get_stack_outputs(stack_name):
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     stack_name = "k8s-grader-api"
     output_values = get_stack_outputs(stack_name)
 
-    template_path = "/workspaces/k8s-grader/k8s-grader-api/events/env.json.template"
+    template_path = "/workspaces/k8s-grader/k8s-grader-api/events/env.template.json"
     env_template = read_env_template(template_path)
 
     def update_env_template(env_template, output_values):

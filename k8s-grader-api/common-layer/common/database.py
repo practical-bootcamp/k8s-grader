@@ -13,6 +13,27 @@ score_table = dynamodb.Table(os.getenv("ScoreTable"))
 session_table = dynamodb.Table(os.getenv("SessionTable"))
 
 
+def is_endpoint_exist(email, endpoint):
+    response = account_table.query(
+        IndexName="EndpointIndex", KeyConditionExpression=Key("endpoint").eq(endpoint)
+    )
+    items = response.get("Items", [])
+    if items:
+        return items[0].get("email") != email
+    return False
+
+
+def save_account(email, endpoint, client_certificate, client_key):
+    account_table.put_item(
+        Item={
+            "email": email,
+            "endpoint": endpoint,
+            "client_certificate": client_certificate,
+            "client_key": client_key,
+        }
+    )
+
+
 def get_email_from_event(event):
     query_params = event.get("queryStringParameters")
     if query_params:

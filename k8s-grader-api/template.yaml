@@ -13,15 +13,25 @@ Resources:
 
   AccountTable:
     Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: AccountTable
+    Properties:      
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
           AttributeType: "S"
+        - AttributeName: "endpoint"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "email"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "EndpointIndex"
+          KeySchema:
+            - AttributeName: "endpoint"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "INCLUDE"
+            NonKeyAttributes:
+              - "email"
 
   GameTaskTable:
     Type: AWS::DynamoDB::Table
@@ -159,6 +169,9 @@ Resources:
       Environment:
         Variables:
           AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          ScoreTable: !Ref ScoreTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTaskGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api

@@ -48,7 +48,7 @@ def lambda_handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps(
-                {"status": "Error", "message": "K8s confdential is missing"}
+                {"status": "Error", "message": "K8s confdential is missing."}
             ),
         }
     clear_tmp_directory()
@@ -58,6 +58,17 @@ def lambda_handler(event, context):
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
     session = get_game_session(email, game, current_task)
+
+    required_keys = ["$endpoint", "$client_key", "$client_certificate"]
+    for key in required_keys:
+        if session[key] != locals()[key[1:]]:
+            return {
+                "statusCode": 200,
+                "body": json.dumps(
+                    {"status": "Error", "message": "Cluster setting is not the same!"}
+                ),
+            }
+
     if session is None:
         return {
             "statusCode": 200,
