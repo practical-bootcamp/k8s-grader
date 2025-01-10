@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   k8s-grader-api
@@ -10,18 +10,30 @@ Globals:
     MemorySize: 512
 
 Resources:
+  TestResultBucket:
+    Type: AWS::S3::Bucket
 
   AccountTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: AccountTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
           AttributeType: "S"
+        - AttributeName: "endpoint"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "email"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: "EndpointIndex"
+          KeySchema:
+            - AttributeName: "endpoint"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "INCLUDE"
+            NonKeyAttributes:
+              - "email"
 
   GameTaskTable:
     Type: AWS::DynamoDB::Table
@@ -55,22 +67,6 @@ Resources:
         - AttributeName: "game"
           KeyType: "RANGE"
 
-  ScoreTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      # TableName: ScoreTable
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: "email"
-          AttributeType: "S"
-        - AttributeName: "game"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "email"
-          KeyType: "HASH"
-        - AttributeName: "game"
-          KeyType: "RANGE"
-
   LibLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -80,19 +76,19 @@ Resources:
       CompatibleRuntimes:
         - python3.11
     Metadata:
-      BuildMethod: makefile   # Required to have AWS SAM build this layer
-  
+      BuildMethod: makefile # Required to have AWS SAM build this layer
+
   CommonLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-        LayerName: CommonLayer
-        Description: Dependencies required for my Python lambdas
-        ContentUri: common-layer/
-        CompatibleRuntimes:
-          - python3.11
-        LicenseInfo: 'Apache License 2.0'        
-    Metadata: 
-        BuildMethod: python3.11
+      LayerName: CommonLayer
+      Description: Dependencies required for my Python lambdas
+      ContentUri: common-layer/
+      CompatibleRuntimes:
+        - python3.11
+      LicenseInfo: "Apache License 2.0"
+    Metadata:
+      BuildMethod: python3.11
 
   GameTaskFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -110,8 +106,8 @@ Resources:
         Variables:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
-          ScoreTable: !Ref ScoreTable
           GameTaskTable: !Ref GameTaskTable
+          TestResultBucket: !Ref TestResultBucket
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -135,8 +131,8 @@ Resources:
         Variables:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
-          ScoreTable: !Ref ScoreTable
           GameTaskTable: !Ref GameTaskTable
+          TestResultBucket: !Ref TestResultBucket
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -159,12 +155,14 @@ Resources:
       Environment:
         Variables:
           AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          GameTaskTable: !Ref GameTaskTable
       Events:
         GameTaskGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /save-k8s-account
-            Method: get            
+            Method: get
         GameTaskGetPost:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
@@ -193,6 +191,6 @@ Outputs:
   SessionTable:
     Description: "Name of the SessionTable"
     Value: !Ref SessionTable
-  ScoreTable:
-    Description: "Name of the ScoreTable"
-    Value: !Ref ScoreTable
+  TestResultBucket:
+    Description: "Name of the TestResultBucket"
+    Value: !Ref TestResultBucket

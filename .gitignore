@@ -163,3 +163,4 @@ cython_debug/
 k8s/minikube/labsuser.pem
 k8s/minikube/downloaded_files/**
 kubectl
+**/**log.txt

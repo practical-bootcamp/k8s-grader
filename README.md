@@ -29,8 +29,8 @@ sam build
 sam deploy
 ```
 
-## Deploy Minikube
-After configure the AWS Credentials, then run
+## Deploy Minikube with CloudFormation
+After configure the AWS Credentials, then run.
 ```
 cd k8s/minikube
 aws cloudformation create-stack --stack-name minikube-stack --template-body file://minikube.yaml
@@ -67,11 +67,10 @@ Sample Data
 **Please note that is http but not https!**
 
 ## Get the minikube key
-1. Download labsuser.pem from AWS Academy Learner Lan
+1. Download labsuser.pem from AWS Academy Learner Lab
 2. Upload to k8s/minikube
 3. Open Terminal and run ```chmod 400 labsuser.pem```
-4. Update IP address in ```k8s/minikube/endpoint.txt```
-5. Run 
+4. Run 
 ```
 cd k8s/minikube
 ./download_key.sh
@@ -87,9 +86,8 @@ To enable auto-completion
 Install Kubectl command tools for Unit Test
 https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
-1. Update IP address in ```k8s/minikube/endpoint.txt```
-2. Run ```./check_minikube_status.sh``` to ensure minikube us running.
-3. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
+1. Run ```./check_minikube_status.sh``` to ensure minikube us running.
+2. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
 
 
 ### Run Local Lambda test
@@ -98,8 +96,22 @@ For the first time, generate the env.json.
 cd k8s-grader-api/events
 python set_env.py
 ```
-
+Test Lambda
 ```
 sam build && sam local invoke GameTaskFunction --event events/event.json --env-vars events/env.json
 sam build && sam local invoke GraderFunction --event events/event.json --env-vars events/env.json
 ```
+Test Web API
+```
+sam build && sam local start-api --log-file log.txt --warm-containers LAZY --env-vars events/env.json
+```
+
+API call sequence
+1. Register k8s account http://127.0.0.1:3000/save-k8s-account
+2. Get Game Task http://127.0.0.1:3000/game-task?email=cywong@vtc.edu.hk&game=game01
+3. Check setup is ready http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=ready
+4. Work on the answer.
+5. Run challenge http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=challenge
+6. Check Result http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=check
+7. Go back to 2. until it reply "All tasks are completed!"
+

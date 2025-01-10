@@ -6,3 +6,4 @@ pytest-order
 pytest-html
 names_generator
 Jinja2
+requests-toolbelt

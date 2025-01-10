@@ -6,15 +6,20 @@ import urllib.request
 from enum import Enum
 
 import pytest
+from jinja2 import Environment
 
 
-class GamePhase(Enum):
+class GamePhrase(Enum):
     SETUP = "setup"
+    READY = "ready"
+    ANSWER = "answer"
+    CHALLENGE = "challenge"
     CHECK = "check"
     CLEANUP = "cleanup"
 
 
-TEST_BASE_PATH = "/tmp/k8s-game-rule-main/k8s-tests/"
+ROOT_PATH = "/tmp/k8s-game-rule-main"
+TEST_BASE_PATH = "/tmp/k8s-game-rule-main/tests"
 
 
 class TestResult(Enum):
@@ -27,16 +32,28 @@ class TestResult(Enum):
     TIME_OUT = 6
 
 
-def run_tests(test_phase: GamePhase, game: str, current_task: str):
+def run_tests(test_phase: GamePhrase, game: str, task: str):
     get_tests()
+
+    mapping = {
+        GamePhrase.SETUP: "01_setup",
+        GamePhrase.READY: "02_ready",
+        GamePhrase.ANSWER: "03_answer",
+        GamePhrase.CHALLENGE: "04_challenge",
+        GamePhrase.CHECK: "05_check",
+        GamePhrase.CLEANUP: "06_cleanup",
+    }
 
     def run_pytest():
         nonlocal retcode
         retcode = pytest.main(
             [
+                f"--rootdir={ROOT_PATH}",
+                "--import-mode=importlib",
                 "--html=/tmp/report.html",
+                "--self-contained-html",
                 "-x",
-                f"{TEST_BASE_PATH}{test_phase.value}/{game}/test_{current_task}.py",
+                f"{TEST_BASE_PATH}/{game}/{task}/test_{mapping[test_phase]}.py",
             ]
         )
 
@@ -53,28 +70,26 @@ def run_tests(test_phase: GamePhase, game: str, current_task: str):
 def get_tests():
     # TODO: Change this to S3 bucket download
     if not os.path.exists("/tmp/k8s-game-rule-main.zip"):
-        url = "https://github.com/wongcyrus/k8s-game-rule/archive/refs/heads/main.zip"
+        url = "https://github.com/practical-bootcamp/k8s-game-rule/archive/refs/heads/main.zip"
         urllib.request.urlretrieve(url, "/tmp/k8s-game-rule-main.zip")
         shutil.unpack_archive("/tmp/k8s-game-rule-main.zip", "/tmp/")
 
 
 def get_tasks(game: str):
     get_tests()
-    folder = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/"
+    folder = f"{TEST_BASE_PATH}/{game}/"
     tasks = []
     for file in os.listdir(folder):
-        if file.endswith(".md"):
-            tasks.append(file.replace("test_", "").replace(".md", ""))
+        if os.path.isdir(os.path.join(folder, file)):
+            tasks.append(file)
     return tasks
 
 
 def get_session_template(game: str, task: str):
     get_tests()
     session = {}
-    game_session_file = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/session.json"
-    task_session_file = (
-        f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/test_{task}.json"
-    )
+    game_session_file = f"{TEST_BASE_PATH}/{game}/session.json"
+    task_session_file = f"{TEST_BASE_PATH}/{game}/{task}/session.json"
     if os.path.exists(game_session_file):
         with open(game_session_file, "r", encoding="utf-8") as file:
             game_session = json.load(file)
@@ -97,17 +112,20 @@ def get_current_task(game: str, finished_tasks):
     return current_task
 
 
+def render(template, session):
+    env = Environment()
+    jinja_template = env.from_string(template)
+    template_string = jinja_template.render(session)
+    return template_string
+
+
 def get_instruction(game: str, task: str, session: dict):
     get_tests()
-    instructions_file = f"{TEST_BASE_PATH}{GamePhase.SETUP.value}/{game}/test_{task}.md"
+    instructions_file = f"{TEST_BASE_PATH}/{game}/{task}/instruction.md"
+
     if os.path.exists(instructions_file):
         with open(instructions_file, "r", encoding="utf-8") as file:
             instruction = file.read()
+        return render(instruction, session)
     else:
         return None
-
-    for k, v in session.items():
-        if isinstance(v, str):
-            instruction = instruction.replace(k, v)
-
-    return instruction

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-SSH_HOST=$(cat endpoint.txt | awk -F[/:] '{print $4}')
+SSH_HOST=$(aws ec2 describe-instances --region us-east-1 --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
 SSH_KEY="labsuser.pem"
 SSH_USER="ec2-user"
 REMOTE_DIR="/home/ec2-user/.minikube/profiles/minikube"
