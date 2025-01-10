@@ -29,8 +29,8 @@ sam build
 sam deploy
 ```
 
-## Deploy Minikube
-After configure the AWS Credentials, then run
+## Deploy Minikube with CloudFormation
+After configure the AWS Credentials, then run.
 ```
 cd k8s/minikube
 aws cloudformation create-stack --stack-name minikube-stack --template-body file://minikube.yaml
@@ -70,8 +70,7 @@ Sample Data
 1. Download labsuser.pem from AWS Academy Learner Lan
 2. Upload to k8s/minikube
 3. Open Terminal and run ```chmod 400 labsuser.pem```
-4. Update IP address in ```k8s/minikube/endpoint.txt```
-5. Run 
+4. Run 
 ```
 cd k8s/minikube
 ./download_key.sh
@@ -87,9 +86,8 @@ To enable auto-completion
 Install Kubectl command tools for Unit Test
 https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
-1. Update IP address in ```k8s/minikube/endpoint.txt```
-2. Run ```./check_minikube_status.sh``` to ensure minikube us running.
-3. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
+1. Run ```./check_minikube_status.sh``` to ensure minikube us running.
+2. Run ```./run_kube_proxy.sh ``` to start kube proxy for remote connection.
 
 
 ### Run Local Lambda test
