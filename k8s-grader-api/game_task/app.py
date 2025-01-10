@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from datetime import datetime
 
 from common.database import (
@@ -11,6 +10,7 @@ from common.database import (
     save_game_session,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
+from common.handler import error_response, setup_paths
 from common.pytest import (
     GamePhase,
     TestResult,
@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-os.environ["PATH"] += os.pathsep + "/opt/kubectl/"
-os.environ["PATH"] += os.pathsep + "/opt/helm/"
+setup_paths()
 
 
 def lambda_handler(event, context):
@@ -34,21 +33,15 @@ def lambda_handler(event, context):
     email = get_email_from_event(event)
     game = event.get("queryStringParameters", {}).get("game")
     if not email or not game:
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {"status": "Error", "message": "Email and Game parameter is missing"}
-            ),
-        }
+        return error_response("Email and Game parameter is missing")
+    if not game.isalnum():
+        return error_response("Game parameter must be a single alphanumeric word")
 
     finished_tasks = get_tasks_by_email_and_game(email, game)
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
     if not current_task:
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"status": "OK", "message": "All tasks are completed"}),
-        }
+        return error_response("All tasks are completed")
 
     user_data = get_user_data(email)
     if not user_data:
@@ -63,12 +56,8 @@ def lambda_handler(event, context):
     endpoint = user_data.get("endpoint")
 
     if not all([client_certificate, client_key, endpoint]):
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {"status": "Error", "message": "K8s confdential is missing"}
-            ),
-        }
+        return error_response("K8s confdential is missing.")
+
     clear_tmp_directory()
     write_user_files(client_certificate, client_key)
 
@@ -78,20 +67,13 @@ def lambda_handler(event, context):
         session = generate_session(email, game, current_task)
         instruction = get_instruction(game, current_task, session)
         if not instruction:
-            return {
-                "statusCode": 200,
-                "body": json.dumps(
-                    {"status": "Error", "message": "Instruction not found!"}
-                ),
-            }
+            return error_response("Instruction not found!")
     else:
         instruction = session["$instruction"]
     session["$instruction"] = instruction
     session["$client_certificate"] = client_certificate
     session["$client_key"] = client_key
     session["$endpoint"] = endpoint
-    save_game_session(email, game, current_task, session)
-    logger.info(session)
 
     try:
         create_json_input(endpoint, session)
@@ -105,14 +87,11 @@ def lambda_handler(event, context):
         )
 
     except Exception as e:
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {"status": "Error", "message": f"{type(e).__name__}: {str(e)}"}
-            ),
-        }
+        return error_response(f"{type(e).__name__}: {str(e)}")
 
     if test_result == TestResult.OK:
+        save_game_session(email, game, current_task, session)
+        logger.info(session)
         return {
             "statusCode": 200,
             "body": json.dumps(
