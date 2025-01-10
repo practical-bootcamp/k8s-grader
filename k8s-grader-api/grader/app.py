@@ -1,17 +1,22 @@
-import json
 import logging
 from datetime import datetime
 
 from common.database import (
     delete_game_session,
-    get_email_from_event,
     get_game_session,
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_task,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
-from common.handler import error_response, setup_paths
+from common.handler import (
+    error_response,
+    extract_k8s_credentials,
+    get_email_and_game_from_event,
+    ok_response,
+    setup_paths,
+    test_result_response,
+)
 from common.pytest import GamePhase, TestResult, get_current_task, run_tests
 from common.s3 import generate_presigned_url, upload_test_result
 
@@ -24,11 +29,9 @@ setup_paths()
 
 def lambda_handler(event, context):
 
-    email = get_email_from_event(event)
-    game = event.get("queryStringParameters", {}).get("game")
+    email, game = get_email_and_game_from_event(event)
     if not email or not game:
         return error_response("Email and Game parameter is missing")
-
     if not game.isalnum():
         return error_response("Game parameter must be a single alphanumeric word")
 
@@ -36,9 +39,7 @@ def lambda_handler(event, context):
     if not user_data:
         return error_response("Email not found in the database")
 
-    client_certificate = user_data.get("client_certificate")
-    client_key = user_data.get("client_key")
-    endpoint = user_data.get("endpoint")
+    client_certificate, client_key, endpoint = extract_k8s_credentials(user_data)
 
     if not all([client_certificate, client_key, endpoint]):
         return error_response("K8s confdential is missing.")
@@ -50,10 +51,8 @@ def lambda_handler(event, context):
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
     if not current_task:
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"status": "OK", "message": "All tasks are completed"}),
-        }
+        return ok_response("All tasks are completed")
+
     session = get_game_session(email, game, current_task)
     if session is None:
         return error_response("Session not found, and no ongoing task.")
@@ -93,24 +92,6 @@ def lambda_handler(event, context):
         return error_response(f"{type(e).__name__}: {str(e)}")
 
     if test_result == TestResult.OK:
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {
-                    "status": test_result.name,
-                    "message": "Task Completed!",
-                    "report_url": report_url,
-                }
-            ),
-        }
+        return test_result_response(test_result, "Task Completed!", report_url)
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "status": test_result.name,
-                "message": "Something is wrong!",
-                "report_url": report_url,
-            }
-        ),
-    }
+    return test_result_response(test_result, "Something is wrong!", report_url)

@@ -35,13 +35,6 @@ def save_account(email, endpoint, client_certificate, client_key):
     )
 
 
-def get_email_from_event(event):
-    query_params = event.get("queryStringParameters")
-    if query_params:
-        return query_params.get("email")
-    return None
-
-
 def get_user_data(email):
     response = account_table.get_item(Key={"email": email})
     return response.get("Item")

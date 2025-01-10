@@ -1,16 +1,20 @@
-import json
 import logging
 from datetime import datetime
 
 from common.database import (
-    get_email_from_event,
     get_game_session,
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_session,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
-from common.handler import error_response, setup_paths
+from common.handler import (
+    error_response,
+    extract_k8s_credentials,
+    get_email_and_game_from_event,
+    setup_paths,
+    test_result_response,
+)
 from common.pytest import (
     GamePhase,
     TestResult,
@@ -24,14 +28,12 @@ from common.session import generate_session
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
 setup_paths()
 
 
 def lambda_handler(event, context):
 
-    email = get_email_from_event(event)
-    game = event.get("queryStringParameters", {}).get("game")
+    email, game = get_email_and_game_from_event(event)
     if not email or not game:
         return error_response("Email and Game parameter is missing")
     if not game.isalnum():
@@ -45,15 +47,9 @@ def lambda_handler(event, context):
 
     user_data = get_user_data(email)
     if not user_data:
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {"status": "Error", "message": "Email not found in the database"}
-            ),
-        }
-    client_certificate = user_data.get("client_certificate")
-    client_key = user_data.get("client_key")
-    endpoint = user_data.get("endpoint")
+        return error_response("Email not found in the database")
+
+    client_certificate, client_key, endpoint = extract_k8s_credentials(user_data)
 
     if not all([client_certificate, client_key, endpoint]):
         return error_response("K8s confdential is missing.")
@@ -92,24 +88,5 @@ def lambda_handler(event, context):
     if test_result == TestResult.OK:
         save_game_session(email, game, current_task, session)
         logger.info(session)
-        return {
-            "statusCode": 200,
-            "body": json.dumps(
-                {
-                    "status": test_result.name,
-                    "message": instruction,
-                    "report_url": report_url,
-                }
-            ),
-        }
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "status": test_result.name,
-                "message": "Something is wrong!",
-                "report_url": report_url,
-            }
-        ),
-    }
+        return test_result_response(test_result, instruction, report_url)
+    return test_result_response(test_result, "Something is wrong!", report_url)
