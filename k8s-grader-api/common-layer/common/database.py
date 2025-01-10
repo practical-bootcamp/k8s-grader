@@ -9,7 +9,6 @@ dynamodb = boto3.resource("dynamodb")
 
 account_table = dynamodb.Table(os.getenv("AccountTable"))
 game_task_table = dynamodb.Table(os.getenv("GameTaskTable"))
-score_table = dynamodb.Table(os.getenv("ScoreTable"))
 session_table = dynamodb.Table(os.getenv("SessionTable"))
 
 

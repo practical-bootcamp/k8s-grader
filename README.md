@@ -67,7 +67,7 @@ Sample Data
 **Please note that is http but not https!**
 
 ## Get the minikube key
-1. Download labsuser.pem from AWS Academy Learner Lan
+1. Download labsuser.pem from AWS Academy Learner Lab
 2. Upload to k8s/minikube
 3. Open Terminal and run ```chmod 400 labsuser.pem```
 4. Run 
@@ -105,3 +105,13 @@ Test Web API
 ```
 sam build && sam local start-api --log-file log.txt --warm-containers LAZY --env-vars events/env.json
 ```
+
+API call sequence
+1. Register k8s account http://127.0.0.1:3000/save-k8s-account
+2. Get Game Task http://127.0.0.1:3000/game-task?email=cywong@vtc.edu.hk&game=game01
+3. Check setup is ready http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=ready
+4. Work on the answer.
+5. Run challenge http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=challenge
+6. Check Result http://127.0.0.1:3000/grader?email=cywong@vtc.edu.hk&game=game01&phrase=check
+7. Go back to 2. until it reply "All tasks are completed!"
+

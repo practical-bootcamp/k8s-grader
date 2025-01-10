@@ -1,7 +1,7 @@
 import json
 import os
 
-from common.pytest import GamePhase
+from common.pytest import GamePhrase, TestResult
 
 
 def setup_paths():
@@ -31,11 +31,14 @@ def html_response(html_content):
     }
 
 
-def test_result_response(test_result: GamePhase, instruction, report_url):
+def test_result_response(
+    game_phrase: GamePhrase, test_result: TestResult, instruction, report_url
+):
     return {
         "statusCode": 200,
         "body": json.dumps(
             {
+                "game_phrase": game_phrase.name,
                 "status": test_result.name,
                 "message": instruction,
                 "report_url": report_url,

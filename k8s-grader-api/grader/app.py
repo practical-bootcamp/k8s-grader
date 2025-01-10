@@ -17,7 +17,7 @@ from common.handler import (
     setup_paths,
     test_result_response,
 )
-from common.pytest import GamePhase, TestResult, get_current_task, run_tests
+from common.pytest import GamePhrase, TestResult, get_current_task, run_tests
 from common.s3 import generate_presigned_url, upload_test_result
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,23 @@ logger.setLevel(logging.INFO)
 setup_paths()
 
 
-def lambda_handler(event, context):
+def get_game_phrase(event) -> GamePhrase:
+    query_params = event.get("queryStringParameters")
+    if not query_params:
+        return None
+    phrase = query_params.get("phrase")
+    return {
+        "ready": GamePhrase.READY,
+        "challenge": GamePhrase.CHALLENGE,
+        "check": GamePhrase.CHECK,
+    }.get(phrase)
+
+
+def lambda_handler(event, context):  # pylint: disable=W0613
+
+    game_phrase = get_game_phrase(event)
+    if not game_phrase:
+        return error_response("Phrase parameter is missing or not supported.")
 
     email, game = get_email_and_game_from_event(event)
     if not email or not game:
@@ -51,7 +67,7 @@ def lambda_handler(event, context):
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
     if not current_task:
-        return ok_response("All tasks are completed")
+        return ok_response("All tasks are completed!")
 
     session = get_game_session(email, game, current_task)
     if session is None:
@@ -67,31 +83,36 @@ def lambda_handler(event, context):
 
     try:
         create_json_input(endpoint, session)
-        test_result = run_tests(GamePhase.CHECK, game, current_task)
+        test_result = run_tests(game_phrase, game, current_task)
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         upload_test_result(
-            "/tmp/report.html", GamePhase.CHECK, now_str, email, game, current_task
+            "/tmp/report.html", game_phrase, now_str, email, game, current_task
         )
         report_url = generate_presigned_url(
-            GamePhase.CHECK, now_str, email, game, current_task
+            game_phrase, now_str, email, game, current_task
         )
 
-        if test_result == TestResult.OK:
+        if test_result == TestResult.OK and game_phrase == GamePhrase.CHECK:
             save_game_task(email, game, current_task)
-            run_tests(GamePhase.CLEANUP, game, current_task)
+            run_tests(GamePhrase.CLEANUP, game, current_task)
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             upload_test_result(
                 "/tmp/report.html",
-                GamePhase.CLEANUP,
+                GamePhrase.CLEANUP,
                 now_str,
                 email,
                 game,
                 current_task,
             )
-    except Exception as e:
+            return test_result_response(
+                game_phrase, test_result, f"{current_task} Completed!", report_url
+            )
+    except (KeyError, ValueError, RuntimeError) as e:
         return error_response(f"{type(e).__name__}: {str(e)}")
 
-    if test_result == TestResult.OK:
-        return test_result_response(test_result, "Task Completed!", report_url)
-
-    return test_result_response(test_result, "Something is wrong!", report_url)
+    return test_result_response(
+        game_phrase,
+        test_result,
+        f"{game_phrase.value} is {test_result.name}",
+        report_url,
+    )

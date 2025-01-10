@@ -12,11 +12,12 @@ from common.handler import (
     error_response,
     extract_k8s_credentials,
     get_email_and_game_from_event,
+    ok_response,
     setup_paths,
     test_result_response,
 )
 from common.pytest import (
-    GamePhase,
+    GamePhrase,
     TestResult,
     get_current_task,
     get_instruction,
@@ -31,7 +32,7 @@ logger.setLevel(logging.INFO)
 setup_paths()
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context):  # pylint: disable=W0613
 
     email, game = get_email_and_game_from_event(event)
     if not email or not game:
@@ -43,7 +44,7 @@ def lambda_handler(event, context):
     current_task = get_current_task(game, finished_tasks)
     logger.info(current_task)
     if not current_task:
-        return error_response("All tasks are completed")
+        return ok_response("All tasks are completed")
 
     user_data = get_user_data(email)
     if not user_data:
@@ -73,20 +74,25 @@ def lambda_handler(event, context):
 
     try:
         create_json_input(endpoint, session)
-        test_result = run_tests(GamePhase.SETUP, game, current_task)
+        test_result = run_tests(GamePhrase.SETUP, game, current_task)
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         upload_test_result(
-            "/tmp/report.html", GamePhase.CHECK, now_str, email, game, current_task
+            "/tmp/report.html", GamePhrase.CHECK, now_str, email, game, current_task
         )
         report_url = generate_presigned_url(
-            GamePhase.CHECK, now_str, email, game, current_task
+            GamePhrase.CHECK, now_str, email, game, current_task
         )
 
-    except Exception as e:
+    except (FileNotFoundError, ValueError, KeyError) as e:
         return error_response(f"{type(e).__name__}: {str(e)}")
 
     if test_result == TestResult.OK:
         save_game_session(email, game, current_task, session)
         logger.info(session)
-        return test_result_response(test_result, instruction, report_url)
-    return test_result_response(test_result, "Something is wrong!", report_url)
+
+    return test_result_response(
+        GamePhrase.SETUP,
+        test_result,
+        f"{GamePhrase.SETUP.value} is {test_result.name}",
+        report_url,
+    )

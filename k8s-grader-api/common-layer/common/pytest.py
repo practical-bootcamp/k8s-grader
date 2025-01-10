@@ -9,7 +9,7 @@ import pytest
 from jinja2 import Environment
 
 
-class GamePhase(Enum):
+class GamePhrase(Enum):
     SETUP = "setup"
     READY = "ready"
     ANSWER = "answer"
@@ -32,16 +32,16 @@ class TestResult(Enum):
     TIME_OUT = 6
 
 
-def run_tests(test_phase: GamePhase, game: str, task: str):
+def run_tests(test_phase: GamePhrase, game: str, task: str):
     get_tests()
 
     mapping = {
-        GamePhase.SETUP: "01_setup",
-        GamePhase.READY: "02_ready",
-        GamePhase.ANSWER: "03_answer",
-        GamePhase.CHALLENGE: "04_challenge",
-        GamePhase.CHECK: "05_check",
-        GamePhase.CLEANUP: "06_cleanup",
+        GamePhrase.SETUP: "01_setup",
+        GamePhrase.READY: "02_ready",
+        GamePhrase.ANSWER: "03_answer",
+        GamePhrase.CHALLENGE: "04_challenge",
+        GamePhrase.CHECK: "05_check",
+        GamePhrase.CLEANUP: "06_cleanup",
     }
 
     def run_pytest():

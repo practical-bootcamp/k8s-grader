@@ -2,12 +2,12 @@ import os
 
 import boto3
 from botocore.exceptions import NoCredentialsError
-from common.pytest import GamePhase
+from common.pytest import GamePhrase
 
 TestResultBucket = os.getenv("TestResultBucket")
 
 
-def upload_test_result(file_name, game_phase: GamePhase, time, email, game, task):
+def upload_test_result(file_name, game_phase: GamePhrase, time, email, game, task):
     object_name = f"{game}/{email}/{task}/a_test_report_{game_phase.name}.html"
     object_name_with_time = (
         f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
@@ -35,7 +35,7 @@ def upload_test_result(file_name, game_phase: GamePhase, time, email, game, task
 
 
 def generate_presigned_url(
-    game_phase: GamePhase, time, email, game, task, expiration=3600
+    game_phase: GamePhrase, time, email, game, task, expiration=3600
 ):
     object_name_with_time = (
         f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"

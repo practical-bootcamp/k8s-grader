@@ -42,7 +42,7 @@ def validate_input(email, endpoint, client_certificate, client_key):
     return None
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context):  # pylint: disable=W0613
     if event["httpMethod"] == "GET":
         html_content = read_html_file("save-account.html")
         return html_response(html_content)
