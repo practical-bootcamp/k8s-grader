@@ -93,6 +93,6 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     return test_result_response(
         GamePhrase.SETUP,
         test_result,
-        f"{GamePhrase.SETUP.value} is {test_result.name}",
+        instruction,
         report_url,
     )
