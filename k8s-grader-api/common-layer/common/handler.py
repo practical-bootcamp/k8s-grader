@@ -11,6 +11,12 @@ def setup_paths():
 
 def error_response(message):
     return {
+        "headers": {
+            "Content-type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
         "statusCode": 200,
         "body": json.dumps({"status": "Error", "message": message}),
     }
@@ -18,6 +24,12 @@ def error_response(message):
 
 def ok_response(message):
     return {
+        "headers": {
+            "Content-type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
         "statusCode": 200,
         "body": json.dumps({"status": "OK", "message": message}),
     }
@@ -25,8 +37,13 @@ def ok_response(message):
 
 def html_response(html_content):
     return {
+        "headers": {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
         "statusCode": 200,
-        "headers": {"Content-Type": "text/html"},
         "body": html_content,
     }
 
@@ -35,6 +52,12 @@ def test_result_response(
     game_phrase: GamePhrase, test_result: TestResult, instruction, report_url
 ):
     return {
+        "headers": {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
         "statusCode": 200,
         "body": json.dumps(
             {
