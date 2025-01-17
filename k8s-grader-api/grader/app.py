@@ -37,7 +37,7 @@ def get_game_phrase(event) -> GamePhrase:
     query_params = event.get("queryStringParameters")
     if not query_params:
         return None
-    phrase = query_params.get("phrase")
+    phrase = query_params.get("phrase").lower()
     return {
         "ready": GamePhrase.READY,
         "challenge": GamePhrase.CHALLENGE,
