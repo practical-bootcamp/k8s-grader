@@ -17,7 +17,13 @@ from common.handler import (
     setup_paths,
     test_result_response,
 )
-from common.pytest import GamePhrase, TestResult, get_current_task, run_tests
+from common.pytest import (
+    GamePhrase,
+    TestResult,
+    get_current_task,
+    get_next_game_phrase,
+    run_tests,
+)
 from common.s3 import generate_presigned_url, upload_test_result
 
 logger = logging.getLogger(__name__)
@@ -105,14 +111,23 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 current_task,
             )
             return test_result_response(
-                game_phrase, test_result, f"{current_task} Completed!", report_url
+                game_phrase,
+                None,
+                test_result,
+                f"{current_task} Completed!",
+                report_url,
             )
     except (KeyError, ValueError, RuntimeError) as e:
         return error_response(f"{type(e).__name__}: {str(e)}")
 
+    next_game_phrase = game_phrase
+    if test_result == TestResult.OK:
+        next_game_phrase = get_next_game_phrase(game, current_task, game_phrase)
+
     return test_result_response(
         game_phrase,
+        next_game_phrase,
         test_result,
-        f"{game_phrase.value} is {test_result.name}",
+        f"{game_phrase.value} in {test_result.name}.",
         report_url,
     )

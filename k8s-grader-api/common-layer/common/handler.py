@@ -49,7 +49,11 @@ def html_response(html_content):
 
 
 def test_result_response(
-    game_phrase: GamePhrase, test_result: TestResult, instruction, report_url
+    game_phrase: GamePhrase,
+    next_game_phrase: GamePhrase,
+    test_result: TestResult,
+    instruction,
+    report_url,
 ):
     return {
         "headers": {
@@ -62,6 +66,7 @@ def test_result_response(
         "body": json.dumps(
             {
                 "game_phrase": game_phrase.name,
+                "next_game_phrase": next_game_phrase.name if next_game_phrase else "",
                 "status": test_result.name,
                 "message": instruction,
                 "report_url": report_url,

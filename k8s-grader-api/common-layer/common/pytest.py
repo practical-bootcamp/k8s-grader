@@ -32,17 +32,26 @@ class TestResult(Enum):
     TIME_OUT = 6
 
 
+MAPPING = {
+    GamePhrase.SETUP: "01_setup",
+    GamePhrase.READY: "02_ready",
+    GamePhrase.ANSWER: "03_answer",
+    GamePhrase.CHALLENGE: "04_challenge",
+    GamePhrase.CHECK: "05_check",
+    GamePhrase.CLEANUP: "06_cleanup",
+}
+
+GAME_PHRASE_ORDER = [
+    GamePhrase.SETUP,
+    GamePhrase.READY,
+    GamePhrase.CHALLENGE,
+    GamePhrase.CHECK,
+    GamePhrase.CLEANUP,
+]
+
+
 def run_tests(test_phase: GamePhrase, game: str, task: str):
     get_tests()
-
-    mapping = {
-        GamePhrase.SETUP: "01_setup",
-        GamePhrase.READY: "02_ready",
-        GamePhrase.ANSWER: "03_answer",
-        GamePhrase.CHALLENGE: "04_challenge",
-        GamePhrase.CHECK: "05_check",
-        GamePhrase.CLEANUP: "06_cleanup",
-    }
 
     def run_pytest():
         nonlocal retcode
@@ -53,7 +62,7 @@ def run_tests(test_phase: GamePhrase, game: str, task: str):
                 "--html=/tmp/report.html",
                 "--self-contained-html",
                 "-x",
-                f"{TEST_BASE_PATH}/{game}/{task}/test_{mapping[test_phase]}.py",
+                f"{TEST_BASE_PATH}/{game}/{task}/test_{MAPPING[test_phase]}.py",
             ]
         )
 
@@ -80,7 +89,7 @@ def get_tasks(game: str):
     folder = f"{TEST_BASE_PATH}/{game}/"
     tasks = []
     for file in os.listdir(folder):
-        if os.path.isdir(os.path.join(folder, file)):
+        if os.path.isdir(os.path.join(folder, file)) and "99_test_template" not in file:
             tasks.append(file)
     return tasks
 
@@ -129,3 +138,14 @@ def get_instruction(game: str, task: str, session: dict):
         return render(instruction, session)
     else:
         return None
+
+
+def get_next_game_phrase(game: str, task: str, current_game_phrase: GamePhrase):
+    get_tests()
+
+    current_index = GAME_PHRASE_ORDER.index(current_game_phrase)
+    for next_index in range(current_index + 1, len(GAME_PHRASE_ORDER)):
+        test_file = f"{TEST_BASE_PATH}/{game}/{task}/test_{MAPPING[GAME_PHRASE_ORDER[next_index]]}.py"
+        if os.path.exists(test_file):
+            return GAME_PHRASE_ORDER[next_index]
+    return None
