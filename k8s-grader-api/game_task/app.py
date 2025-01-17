@@ -21,6 +21,7 @@ from common.pytest import (
     TestResult,
     get_current_task,
     get_instruction,
+    get_next_game_phrase,
     run_tests,
 )
 from common.s3 import generate_presigned_url, upload_test_result
@@ -90,8 +91,10 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         save_game_session(email, game, current_task, session)
         logger.info(session)
 
+    next_game_phrase = get_next_game_phrase(game, current_task, GamePhrase.SETUP)
     return test_result_response(
         GamePhrase.SETUP,
+        next_game_phrase,
         test_result,
         instruction,
         report_url,
