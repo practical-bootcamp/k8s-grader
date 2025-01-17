@@ -88,7 +88,7 @@ def get_tasks(game: str):
     get_tests()
     folder = f"{TEST_BASE_PATH}/{game}/"
     tasks = []
-    for file in os.listdir(folder):
+    for file in sorted(os.listdir(folder)):
         if os.path.isdir(os.path.join(folder, file)) and "99_test_template" not in file:
             tasks.append(file)
     return tasks
