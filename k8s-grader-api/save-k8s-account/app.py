@@ -55,7 +55,8 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             post_data = decode_post_data(event)
             fs = parse_multipart_data(post_data, content_type)
 
-            email = fs["email"].text
+            api_key = event["headers"].get("x-api-key")
+            email = api_key.split("-")[0]
             endpoint = fs["endpoint"].text
             client_certificate = fs["client-certificate"].text
             client_key = fs["client-key"].text

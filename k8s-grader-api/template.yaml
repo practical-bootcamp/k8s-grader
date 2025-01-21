@@ -14,11 +14,7 @@ Globals:
       - x86_64
   Api:
     TracingEnabled: true
-    Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
-      
+   
 Resources:
   TestResultBucket:
     Type: AWS::S3::Bucket
@@ -77,6 +73,35 @@ Resources:
         - AttributeName: "game"
           KeyType: "RANGE"
 
+# Handle CORS https://github.com/aws/serverless-application-model/issues/1786
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${AWS::StackName}-api"
+      StageName: Prod
+      Auth:
+        ApiKeyRequired: true
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'*'"
+        AllowMethods: "'*'"
+        MaxAge: "'600'"
+        
+  APIUsagePlan:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      ApiStages:
+        - ApiId: !Ref ApiGatewayApi
+          Stage: !Ref ApiGatewayApi.Stage
+      Description: To usage plan and api key in REST API.
+      Quota:
+        Limit: 2880
+        Period: DAY
+      Throttle:
+        BurstLimit: 60
+        RateLimit: 60
+      UsagePlanName: "grader-usage-plan"
+
   LibLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -120,6 +145,18 @@ Resources:
           Properties:
             Path: /game-task
             Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
+        ProxyApiCors:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /game-task
+            Method: options
+            Auth:
+              ApiKeyRequired: false
 
   GraderFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -141,7 +178,19 @@ Resources:
           Properties:
             Path: /grader
             Method: get
-
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
+        ProxyApiCors:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /grader
+            Method: options
+            Auth:
+              ApiKeyRequired: false
+              
   SaveK8sAccountFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -156,16 +205,24 @@ Resources:
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
       Events:
-        GameTaskGet:
+         SaveK8sAccountGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /save-k8s-account
             Method: get
-        GameTaskGetPost:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: false
+         SaveK8sAccountPost:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /save-k8s-account
             Method: post
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -173,13 +230,13 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   GameApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
   SaveK8sAccountApi:
     Description: "API Gateway endpoint URL for Prod stage for Save K8s Account function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
   GraderApi:
     Description: "API Gateway endpoint URL for Prod stage for Grader function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable

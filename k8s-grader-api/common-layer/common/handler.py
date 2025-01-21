@@ -83,7 +83,11 @@ def extract_k8s_credentials(user_data):
 
 
 def get_email_and_game_from_event(event):
+    api_key = event["headers"].get("x-api-key")
+    if not api_key:
+        return None, None
+    email = api_key.split("-")[0]
     query_params = event.get("queryStringParameters")
     if query_params:
-        return query_params.get("email"), query_params.get("game")
+        return email, query_params.get("game")
     return None, None
