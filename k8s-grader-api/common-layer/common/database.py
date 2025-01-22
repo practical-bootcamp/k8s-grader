@@ -10,6 +10,7 @@ dynamodb = boto3.resource("dynamodb")
 account_table = dynamodb.Table(os.getenv("AccountTable"))
 game_task_table = dynamodb.Table(os.getenv("GameTaskTable"))
 session_table = dynamodb.Table(os.getenv("SessionTable"))
+api_key_table = dynamodb.Table(os.getenv("ApiKeyTable"))
 
 
 def is_endpoint_exist(email, endpoint):
@@ -81,3 +82,15 @@ def get_game_session(email, game, task):
     if item:
         return json.loads(item["session"])
     return None
+
+
+def get_api_key(email):
+    response = api_key_table.get_item(Key={"email": email})
+    item = response.get("Item")
+    if item:
+        return item["api_key"]
+    return None
+
+
+def save_api_key(email, api_key):
+    api_key_table.put_item(Item={"email": email, "api_key": api_key})

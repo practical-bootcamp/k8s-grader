@@ -6,7 +6,8 @@
   "isBase64Encoded": false,
   "queryStringParameters": {
     "email": "cywong@vtc.edu.hk",
-    "game": "game01"
+    "game": "game01",
+    "secret":"defaultSecretHash"
   },
   "pathParameters": {
     "proxy": "/path/to/resource"

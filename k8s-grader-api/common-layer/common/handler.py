@@ -2,6 +2,9 @@ import json
 import os
 
 from common.pytest import GamePhrase, TestResult
+from cryptography.fernet import Fernet
+
+SECRET_HASH = os.getenv("SecretHash")
 
 
 def setup_paths():
@@ -48,6 +51,19 @@ def html_response(html_content):
     }
 
 
+def text_response(text_content):
+    return {
+        "headers": {
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+        "statusCode": 200,
+        "body": text_content,
+    }
+
+
 def test_result_response(
     game_phrase: GamePhrase,
     next_game_phrase: GamePhrase,
@@ -86,7 +102,10 @@ def get_email_and_game_from_event(event):
     api_key = event["headers"].get("x-api-key")
     if not api_key:
         return None, None
-    email = api_key.split("-")[0]
+
+    fernet = Fernet(SECRET_HASH)
+    email = fernet.decrypt(api_key).decode()
+
     query_params = event.get("queryStringParameters")
     if query_params:
         return email, query_params.get("game")

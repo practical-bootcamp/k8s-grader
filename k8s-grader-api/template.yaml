@@ -4,6 +4,11 @@ Description: >
   k8s-grader-api
   Sample SAM Template for k8s-grader-api
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Parameters:
+  SecretHash:
+    Type: String
+    Description: "Secret hash for secure operations"
+    Default: "hyKOuny4vy94RUiYe3pB6CCwtaJeW6B_fOtqbK1PXrQ="
 Globals:
   Function:
     Timeout: 29
@@ -18,6 +23,17 @@ Globals:
 Resources:
   TestResultBucket:
     Type: AWS::S3::Bucket
+
+  ApiKeyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
 
   AccountTable:
     Type: AWS::DynamoDB::Table
@@ -100,7 +116,7 @@ Resources:
       Throttle:
         BurstLimit: 60
         RateLimit: 60
-      UsagePlanName: "grader-usage-plan"
+      UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
 
   LibLayer:
     Type: AWS::Serverless::LayerVersion
@@ -138,7 +154,9 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
+          SecretHash: !Ref SecretHash
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -171,7 +189,9 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
+          SecretHash: !Ref SecretHash
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -204,6 +224,8 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
+          SecretHash: !Ref SecretHash
       Events:
          SaveK8sAccountGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -224,6 +246,34 @@ Resources:
             Auth:
               ApiKeyRequired: true
 
+  KeygenFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: keygen/
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref CommonLayer
+      Environment:
+        Variables:
+          SecretHash: !Ref SecretHash          
+          StageName: Prod
+          ApiGateWayName: !Sub "${AWS::StackName}-api"
+          UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
+      Events:
+        KeygenTask:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /keygen
+            Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: false
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -237,6 +287,9 @@ Outputs:
   GraderApi:
     Description: "API Gateway endpoint URL for Prod stage for Grader function"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+  KeygenApi:
+    Description: "API Gateway endpoint URL for Prod stage for Keygen function"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/keygen/?secret=${SecretHash}&email="
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
