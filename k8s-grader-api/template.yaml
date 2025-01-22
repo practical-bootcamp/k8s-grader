@@ -4,6 +4,11 @@ Description: >
   k8s-grader-api
   Sample SAM Template for k8s-grader-api
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Parameters:
+  SecretHash:
+    Type: String
+    Description: "Secret hash for secure operations"
+    Default: "hyKOuny4vy94RUiYe3pB6CCwtaJeW6B_fOtqbK1PXrQ="
 Globals:
   Function:
     Timeout: 29
@@ -14,14 +19,20 @@ Globals:
       - x86_64
   Api:
     TracingEnabled: true
-    Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
-      
 Resources:
   TestResultBucket:
     Type: AWS::S3::Bucket
+
+  ApiKeyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
 
   AccountTable:
     Type: AWS::DynamoDB::Table
@@ -77,6 +88,35 @@ Resources:
         - AttributeName: "game"
           KeyType: "RANGE"
 
+# Handle CORS https://github.com/aws/serverless-application-model/issues/1786
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${AWS::StackName}-api"
+      StageName: Prod
+      Auth:
+        ApiKeyRequired: true
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'*'"
+        AllowMethods: "'*'"
+        MaxAge: "'600'"
+        
+  APIUsagePlan:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      ApiStages:
+        - ApiId: !Ref ApiGatewayApi
+          Stage: !Ref ApiGatewayApi.Stage
+      Description: To usage plan and api key in REST API.
+      Quota:
+        Limit: 2880
+        Period: DAY
+      Throttle:
+        BurstLimit: 60
+        RateLimit: 60
+      UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+
   LibLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -113,13 +153,27 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
+          SecretHash: !Ref SecretHash
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /game-task
             Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
+        ProxyApiCors:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /game-task
+            Method: options
+            Auth:
+              ApiKeyRequired: false
 
   GraderFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -134,14 +188,28 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
+          SecretHash: !Ref SecretHash
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /grader
             Method: get
-
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
+        ProxyApiCors:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /grader
+            Method: options
+            Auth:
+              ApiKeyRequired: false
+              
   SaveK8sAccountFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -155,17 +223,55 @@ Resources:
           AccountTable: !Ref AccountTable
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
+          SecretHash: !Ref SecretHash
       Events:
-        GameTaskGet:
+         SaveK8sAccountGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /save-k8s-account
             Method: get
-        GameTaskGetPost:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: false
+         SaveK8sAccountPost:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /save-k8s-account
             Method: post
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: true
+
+  KeygenFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: keygen/
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref CommonLayer
+      Environment:
+        Variables:
+          SecretHash: !Ref SecretHash          
+          StageName: Prod
+          ApiGateWayName: !Sub "${AWS::StackName}-api"
+          UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
+      Events:
+        KeygenTask:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /keygen
+            Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: false
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -173,13 +279,16 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   GameApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
   SaveK8sAccountApi:
     Description: "API Gateway endpoint URL for Prod stage for Save K8s Account function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
   GraderApi:
     Description: "API Gateway endpoint URL for Prod stage for Grader function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+  KeygenApi:
+    Description: "API Gateway endpoint URL for Prod stage for Keygen function"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/keygen/?secret=${SecretHash}&email="
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
