@@ -22,11 +22,17 @@ aws configure
 aws configure set aws_session_token <Session Token>
 ```
 
-## Deploy the SAM project
+## Deploy the SAM 
+Generate a secret hash.
+```
+cd tools
+python genkey.py
+```
+
 ```
 cd k8s-grader-api
 sam build
-sam deploy
+sam deploy --parameter-overrides SecretHash="XXXXXXXXXXX"
 ```
 
 ## Deploy Minikube with CloudFormation
