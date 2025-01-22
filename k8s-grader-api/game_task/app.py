@@ -49,7 +49,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
 
     user_data = get_user_data(email)
     if not user_data:
-        return error_response("Email not found in the database")
+        return error_response(f"{email} not found in the database")
 
     client_certificate, client_key, endpoint = extract_k8s_credentials(user_data)
 

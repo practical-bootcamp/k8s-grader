@@ -103,10 +103,21 @@ def get_email_and_game_from_event(event):
     if not api_key:
         return None, None
 
-    fernet = Fernet(SECRET_HASH)
-    email = fernet.decrypt(api_key).decode()
+    email = get_email_from_api_key(api_key)
 
     query_params = event.get("queryStringParameters")
     if query_params:
         return email, query_params.get("game")
     return None, None
+
+
+def get_email_from_event(event):
+    api_key = event["headers"].get("x-api-key")
+    if not api_key:
+        return None
+    return get_email_from_api_key(api_key)
+
+
+def get_email_from_api_key(api_key):
+    fernet = Fernet(SECRET_HASH)
+    return fernet.decrypt(api_key.encode()).decode()

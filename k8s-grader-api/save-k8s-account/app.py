@@ -2,7 +2,12 @@ import base64
 import logging
 
 from common.database import is_endpoint_exist, save_account
-from common.handler import error_response, html_response, ok_response
+from common.handler import (
+    error_response,
+    get_email_from_event,
+    html_response,
+    ok_response,
+)
 from requests_toolbelt.multipart import decoder
 
 logger = logging.getLogger(__name__)
@@ -55,8 +60,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             post_data = decode_post_data(event)
             fs = parse_multipart_data(post_data, content_type)
 
-            api_key = event["headers"].get("x-api-key")
-            email = api_key.split("-")[0]
+            email = get_email_from_event(event)
             endpoint = fs["endpoint"].text
             client_certificate = fs["client-certificate"].text
             client_key = fs["client-key"].text
