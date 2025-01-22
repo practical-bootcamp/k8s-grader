@@ -19,7 +19,6 @@ Globals:
       - x86_64
   Api:
     TracingEnabled: true
-   
 Resources:
   TestResultBucket:
     Type: AWS::S3::Bucket
