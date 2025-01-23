@@ -9,6 +9,10 @@ Parameters:
     Type: String
     Description: "Secret hash for secure operations"
     Default: "hyKOuny4vy94RUiYe3pB6CCwtaJeW6B_fOtqbK1PXrQ="
+  StageName:
+    Type: String
+    Description: "Stage name for the API"
+    Default: "Prod"
 Globals:
   Function:
     Timeout: 29
@@ -93,7 +97,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: !Sub "${AWS::StackName}-api"
-      StageName: Prod
+      StageName: !Ref StageName
       Auth:
         ApiKeyRequired: true
       Cors:
@@ -255,7 +259,7 @@ Resources:
       Environment:
         Variables:
           SecretHash: !Ref SecretHash          
-          StageName: Prod
+          StageName: !Ref StageName
           ApiGateWayName: !Sub "${AWS::StackName}-api"
           UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
           AccountTable: !Ref AccountTable
@@ -277,18 +281,15 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  GameApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/game-task/"
-  SaveK8sAccountApi:
-    Description: "API Gateway endpoint URL for Prod stage for Save K8s Account function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/save-k8s-account/"
-  GraderApi:
-    Description: "API Gateway endpoint URL for Prod stage for Grader function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/grader/?email=xxxx"
+  BaseUrl:
+    Description: "API Gateway endpoint URL for ${StageName} stage."
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  SaveK8sAccountUrl:
+    Description: "API Gateway endpoint URL for ${StageName} stage for SaveK8sAccount function"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/save-k8s-account/" 
   KeygenApi:
-    Description: "API Gateway endpoint URL for Prod stage for Keygen function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/keygen/?secret=${SecretHash}&email="
+    Description: "API Gateway endpoint URL for ${StageName} stage for Keygen function"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/keygen/?secret=${SecretHash}&email="
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
@@ -298,6 +299,21 @@ Outputs:
   SessionTable:
     Description: "Name of the SessionTable"
     Value: !Ref SessionTable
+  ApiKeyTable:
+    Description: "Name of the ApiKeyTable"
+    Value: !Ref ApiKeyTable
   TestResultBucket:
     Description: "Name of the TestResultBucket"
     Value: !Ref TestResultBucket
+  SecretHash:
+    Description: "Secret hash for secure operations"
+    Value: !Ref SecretHash
+  ApiGateWayName:
+    Description: "API Gateway name"
+    Value: !Sub "${AWS::StackName}-api"
+  StageName:
+    Description: "Stage name for the API"
+    Value: !Ref StageName
+  UsagePlanName:
+    Description: "Usage plan name"
+    Value: !Sub "${AWS::StackName}-usage-plan"
