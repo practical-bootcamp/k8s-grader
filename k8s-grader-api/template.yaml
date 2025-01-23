@@ -282,13 +282,13 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   BaseUrl:
-    Description: "API Gateway endpoint URL for ${StageName} stage."
+    Description: "Base Url for the game"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
   SaveK8sAccountUrl:
-    Description: "API Gateway endpoint URL for ${StageName} stage for SaveK8sAccount function"
+    Description: "Save K8s Account URL."
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/save-k8s-account/" 
   KeygenApi:
-    Description: "API Gateway endpoint URL for ${StageName} stage for Keygen function"
+    Description: "Endpoint URL for Keygen function"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/keygen/?secret=${SecretHash}&email="
   AccountTable:
     Description: "Name of the AccountTable"
