@@ -64,11 +64,16 @@ Resources:
       ResourceSignal:
         Timeout: PT10M
 
-Outputs:
-  InstancePublicIp:
-    Description: The public IP address of the Minikube instance
-    Value: !GetAtt MinikubeInstance.PublicIp
+  MinikubeEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MinikubeInstance
 
+Outputs:
   SSHCommand:
     Description: SSH command to connect to the Minikube instance
-    Value: !Sub "ssh -i ${KeyName}.pem ec2-user@${MinikubeInstance.PublicIp}"
+    Value: !Sub "ssh -i ${KeyName}.pem ec2-user@${MinikubeEIP}"
+
+  InstancePublicIp:
+    Description: Elastic IP for MinikubeInstance
+    Value: !Ref MinikubeEIP
