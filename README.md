@@ -1,7 +1,7 @@
 # k8s-grader
 This is the AWS SAM backend for Kubernetes Isekai (異世界), which can be deployed to AWS Academy Learner Lab. This allows educators and students to play and learn Kubernetes for free.
 
-Kubernetes Isekai (異世界） is an open-source RPG designed for hands-on Kubernetes learning through gamification. Ideal for junior to Higher Diploma students of Hong Kong Institute of Information Technology (HKIIT), it transforms Kubernetes education into an engaging adventure.
+Kubernetes Isekai (異世界) is an open-source RPG designed for hands-on Kubernetes learning through gamification. Ideal for junior to Higher Diploma students of Hong Kong Institute of Information Technology (HKIIT), it transforms Kubernetes education into an engaging adventure.
 
 1. Role-Playing Adventure: Students interact with NPCs who assign Kubernetes tasks.
 2. Task-Based Learning: Tasks involve setting up and managing Kubernetes clusters.
@@ -79,11 +79,20 @@ aws cloudformation delete-stack --stack-name minikube-stack
 ## Minikube dashboard
 For more information on how to make the Minikube dashboard accessible on all IPs (0.0.0.0), refer to [this link](https://unix.stackexchange.com/questions/621369/how-can-i-make-the-minikube-dashboard-answer-on-all-ips-0-0-0-0).
 
+Open a new terminal and ensure the command runs continuously.
 ```
-kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
 minikube dashboard --url
 ```
+
+
+## Configure Minikube to accept external connections. (VERY IMPORTANT)
+Open a new terminal and ensure the command runs continuously.
 **To make the API call working, you must start the kubectl proxy!**
+```
+kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
+```
+All tests will fail if the proxy is not running.
+
 
 Sample Data
 ```

@@ -136,8 +136,7 @@ def get_instruction(game: str, task: str, session: dict):
         with open(instructions_file, "r", encoding="utf-8") as file:
             instruction = file.read()
         return render(instruction, session)
-    else:
-        return None
+    return None
 
 
 def get_next_game_phrase(game: str, task: str, current_game_phrase: GamePhrase):
