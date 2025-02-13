@@ -33,17 +33,17 @@ https://github.com/wongcyrus/k8s-game-rule
 ./aws_sam_setup.sh
 ```
 ### Configure AWS Credentials 
-Method 1: Configure AWS Account for AWS Academy Learner Lab 
+Method 1: Set the token with CLI (Prefered)
+```
+aws configure
+aws configure set aws_session_token <Session Token>
+```
+Method 2: Configure AWS Account for AWS Academy Learner Lab 
 ```
 export AWS_ACCESS_KEY_ID=ASIAIOSFODNN7EXAMPLE
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_SESSION_TOKEN=AQoDYXdzEJr...<remainder of session token>
 export AWS_DEFAULT_REGION=us-east-1
-```
-Method 2: Set the token with CLI
-```
-aws configure
-aws configure set aws_session_token <Session Token>
 ```
 
 ## Deploy the SAM 
