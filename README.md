@@ -101,6 +101,8 @@ kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
 
 <img src="https://i.sstatic.net/YGIVx.png" alt="Set Public Port" width="50%">
 
+5. Get the client.crt and client.key from ```/home/vscode/.minikube/profiles/minikube``` .
+
 
 ## Minikube dashboard
 For more information on how to make the Minikube dashboard accessible on all IPs (0.0.0.0), refer to [this link](https://unix.stackexchange.com/questions/621369/how-can-i-make-the-minikube-dashboard-answer-on-all-ips-0-0-0-0).
