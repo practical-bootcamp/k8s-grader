@@ -58,8 +58,11 @@ cd k8s-grader-api
 sam build
 sam deploy --parameter-overrides SecretHash="XXXXXXXXXXX"
 ```
+## Minikube for exercise
 
-## Deploy Minikube with CloudFormation
+A Minikube endpoint accessible via the internet is required, and must remain confidential.  Deployment options include EC2 or Codespaces.
+
+### Deploy Minikube with CloudFormation
 After configure the AWS Credentials, then run.
 ```
 cd k8s/minikube
@@ -74,6 +77,29 @@ Delete Minikube
 ```
 aws cloudformation delete-stack --stack-name minikube-stack
 ```
+
+### Deploy Minikube with GitHub CodeSpaces
+
+1. Create CodeSpaces with devcontainer.json
+```
+{	
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
+	}
+}
+```
+2. Starts a Minikube 
+```
+minikube start --apiserver-ips=0.0.0.0 --driver=docker --force
+```
+3. Start proxy
+```
+kubectl proxy --address=0.0.0.0 --accept-hosts='.*'
+```
+4. **VERY IMPORTANT** Make port 8081 public
+
+<img src="https://i.sstatic.net/YGIVx.png" alt="Set Public Port" width="50%">
 
 
 ## Minikube dashboard
