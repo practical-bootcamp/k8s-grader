@@ -63,7 +63,6 @@ Resources:
   GameTaskTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      # TableName: GameTaskTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
@@ -79,7 +78,6 @@ Resources:
   SessionTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      # TableName: SessionTable
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "email"
@@ -91,6 +89,54 @@ Resources:
           KeyType: "HASH"
         - AttributeName: "game"
           KeyType: "RANGE"
+
+  TestRecordTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "gameTime"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+        - AttributeName: "gameTime"
+          KeyType: "RANGE"
+  
+  NpcTaskTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "game"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+        - AttributeName: "game"
+          KeyType: "RANGE"
+
+  NpcLockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "gameNpc"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+        - AttributeName: "gameNpc"
+          KeyType: "RANGE"
+      TimeToLiveSpecification:
+        AttributeName: "ttl"
+        Enabled: true
 
 # Handle CORS https://github.com/aws/serverless-application-model/issues/1786
   ApiGatewayApi:
@@ -160,6 +206,9 @@ Resources:
           ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
           SecretHash: !Ref SecretHash
+          TestRecordTable: !Ref TestRecordTable
+          NpcTaskTable: !Ref NpcTaskTable
+          NpcLockTable: !Ref NpcLockTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -195,6 +244,9 @@ Resources:
           ApiKeyTable: !Ref ApiKeyTable
           TestResultBucket: !Ref TestResultBucket
           SecretHash: !Ref SecretHash
+          TestRecordTable: !Ref TestRecordTable
+          NpcTaskTable: !Ref NpcTaskTable
+          NpcLockTable: !Ref NpcLockTable
       Events:
         GameTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -229,6 +281,9 @@ Resources:
           GameTaskTable: !Ref GameTaskTable
           ApiKeyTable: !Ref ApiKeyTable
           SecretHash: !Ref SecretHash
+          TestRecordTable: !Ref TestRecordTable
+          NpcTaskTable: !Ref NpcTaskTable
+          NpcLockTable: !Ref NpcLockTable
       Events:
          SaveK8sAccountGet:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -266,6 +321,9 @@ Resources:
           SessionTable: !Ref SessionTable
           GameTaskTable: !Ref GameTaskTable
           ApiKeyTable: !Ref ApiKeyTable
+          TestRecordTable: !Ref TestRecordTable
+          NpcTaskTable: !Ref NpcTaskTable
+          NpcLockTable: !Ref NpcLockTable
       Events:
         KeygenTask:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -317,3 +375,12 @@ Outputs:
   UsagePlanName:
     Description: "Usage plan name"
     Value: !Sub "${AWS::StackName}-usage-plan"
+  TestRecordTable:
+    Description: "Name of the TestRecordTable"
+    Value: !Ref TestRecordTable
+  NpcTaskTable:
+    Description: "Name of the NpcTaskTable"
+    Value: !Ref NpcTaskTable
+  NpcLockTable:
+    Description: "Name of the NpcLockTable"
+    Value: !Ref NpcLockTable

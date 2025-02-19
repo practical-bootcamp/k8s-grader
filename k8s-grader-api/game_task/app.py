@@ -6,6 +6,7 @@ from common.database import (
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_session,
+    save_test_record,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
 from common.handler import (
@@ -24,7 +25,7 @@ from common.pytest import (
     get_next_game_phrase,
     run_tests,
 )
-from common.s3 import generate_presigned_url, upload_test_result
+from common.s3 import generate_presigned_url, get_bucket_key, upload_test_result
 from common.session import generate_session
 
 logger = logging.getLogger(__name__)
@@ -78,10 +79,16 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         test_result = run_tests(GamePhrase.SETUP, game, current_task)
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         upload_test_result(
-            "/tmp/report.html", GamePhrase.CHECK, now_str, email, game, current_task
+            "/tmp/report.html", GamePhrase.SETUP, now_str, email, game, current_task
         )
         report_url = generate_presigned_url(
-            GamePhrase.CHECK, now_str, email, game, current_task
+            GamePhrase.SETUP, now_str, email, game, current_task
+        )
+        bucket, key = get_bucket_key(
+            email, game, current_task, GamePhrase.SETUP, now_str
+        )
+        save_test_record(
+            email, game, current_task, GamePhrase.SETUP, bucket, key, now_str
         )
 
     except (FileNotFoundError, ValueError, KeyError) as e:

@@ -7,6 +7,7 @@ from common.database import (
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_task,
+    save_test_record,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
 from common.handler import (
@@ -24,7 +25,7 @@ from common.pytest import (
     get_next_game_phrase,
     run_tests,
 )
-from common.s3 import generate_presigned_url, upload_test_result
+from common.s3 import generate_presigned_url, get_bucket_key, upload_test_result
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -98,9 +99,15 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             game_phrase, now_str, email, game, current_task
         )
 
+        bucket, key = get_bucket_key(email, game, current_task, game_phrase, now_str)
+        save_test_record(email, game, current_task, game_phrase, bucket, key, now_str)
+
         if test_result == TestResult.OK and game_phrase == GamePhrase.CHECK:
             save_game_task(email, game, current_task)
             run_tests(GamePhrase.CLEANUP, game, current_task)
+            upload_test_result(
+                "/tmp/report.html", game_phrase, now_str, email, game, current_task
+            )
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             upload_test_result(
                 "/tmp/report.html",
@@ -109,6 +116,12 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 email,
                 game,
                 current_task,
+            )
+            bucket, key = get_bucket_key(
+                email, game, current_task, GamePhrase.CLEANUP, now_str
+            )
+            save_test_record(
+                email, game, current_task, GamePhrase.CLEANUP, bucket, key, now_str
             )
             return test_result_response(
                 game_phrase,
