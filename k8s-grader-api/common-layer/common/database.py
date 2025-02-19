@@ -15,6 +15,7 @@ api_key_table = dynamodb.Table(os.getenv("ApiKeyTable"))
 test_record_table = dynamodb.Table(os.getenv("TestRecordTable"))
 npc_task_table = dynamodb.Table(os.getenv("NpcTaskTable"))
 npc_lock_table = dynamodb.Table(os.getenv("NpcLockTable"))
+npc_background_table = dynamodb.Table(os.getenv("NpcBackgroundTable"))
 
 
 def is_endpoint_exist(email, endpoint):
@@ -148,3 +149,28 @@ def get_npc_lock(email, game_npc):
     if item:
         return item
     return None
+
+
+def get_npc_background(name):
+    response = npc_background_table.get_item(Key={"name": name})
+    item = response.get("Item")
+    if item:
+        return {
+            "name": item.get("name"),
+            "age": item.get("age"),
+            "gender": item.get("gender"),
+            "background": item.get("background"),
+        }
+    return None
+
+
+def save_npc_background(name, age, gender, background):
+    npc_background_table.put_item(
+        Item={
+            "name": name,
+            "age": age,
+            "gender": gender,
+            "background": background,
+            "time": int(time.time()),
+        }
+    )

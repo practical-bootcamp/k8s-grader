@@ -137,6 +137,18 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: "ttl"
         Enabled: true
+  
+  NpcBackgroundTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "name"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "name"
+          KeyType: "HASH"
+
 
 # Handle CORS https://github.com/aws/serverless-application-model/issues/1786
   ApiGatewayApi:
@@ -191,7 +203,7 @@ Resources:
       BuildMethod: python3.11
 
   GameTaskFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: game_task/
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
@@ -209,9 +221,10 @@ Resources:
           TestRecordTable: !Ref TestRecordTable
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
+          NpcBackgroundTable: !Ref NpcBackgroundTable
       Events:
         GameTask:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api 
           Properties:
             Path: /game-task
             Method: get
@@ -229,7 +242,7 @@ Resources:
               ApiKeyRequired: false
 
   GraderFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: grader/
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
@@ -247,9 +260,10 @@ Resources:
           TestRecordTable: !Ref TestRecordTable
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
+          NpcBackgroundTable: !Ref NpcBackgroundTable
       Events:
         GameTask:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api 
           Properties:
             Path: /grader
             Method: get
@@ -267,7 +281,7 @@ Resources:
               ApiKeyRequired: false
               
   SaveK8sAccountFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: save-k8s-account/
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
@@ -284,9 +298,10 @@ Resources:
           TestRecordTable: !Ref TestRecordTable
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
+          NpcBackgroundTable: !Ref NpcBackgroundTable
       Events:
          SaveK8sAccountGet:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api 
           Properties:
             Path: /save-k8s-account
             Method: get
@@ -295,7 +310,7 @@ Resources:
             Auth:
               ApiKeyRequired: false
          SaveK8sAccountPost:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api 
           Properties:
             Path: /save-k8s-account
             Method: post
@@ -305,7 +320,7 @@ Resources:
               ApiKeyRequired: true
 
   KeygenFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function 
     Properties:
       CodeUri: keygen/
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
@@ -324,11 +339,41 @@ Resources:
           TestRecordTable: !Ref TestRecordTable
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
+          NpcBackgroundTable: !Ref NpcBackgroundTable
       Events:
         KeygenTask:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api 
           Properties:
             Path: /keygen
+            Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
+            Auth:
+              ApiKeyRequired: false
+
+  LoadNpcBackgroundFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: load_npc_background/
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+      Layers:
+        - !Ref CommonLayer
+      Environment:
+        Variables:
+          SecretHash: !Ref SecretHash                 
+          AccountTable: !Ref AccountTable
+          SessionTable: !Ref SessionTable
+          GameTaskTable: !Ref GameTaskTable
+          ApiKeyTable: !Ref ApiKeyTable
+          TestRecordTable: !Ref TestRecordTable
+          NpcTaskTable: !Ref NpcTaskTable
+          NpcLockTable: !Ref NpcLockTable
+          NpcBackgroundTable: !Ref NpcBackgroundTable
+      Events:
+        KeygenTask:
+          Type: Api 
+          Properties:
+            Path: /load_npc_background
             Method: get
             RestApiId:
               Ref: ApiGatewayApi
@@ -348,6 +393,9 @@ Outputs:
   KeygenApi:
     Description: "Endpoint URL for Keygen function"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/keygen/?secret=${SecretHash}&email="
+  LoadNpcBackgroundApi:
+    Description: "Endpoint URL for LoadNpcBackground function"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/load_npc_background/?secret=${SecretHash}&sheet_id="  
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
@@ -384,3 +432,6 @@ Outputs:
   NpcLockTable:
     Description: "Name of the NpcLockTable"
     Value: !Ref NpcLockTable
+  NpcBackgroundTable:
+    Description: "Name of the NpcBackgroundTable"
+    Value: !Ref NpcBackgroundTable
