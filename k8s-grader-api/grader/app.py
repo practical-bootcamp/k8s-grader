@@ -176,6 +176,6 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         game_phrase,
         next_game_phrase,
         test_result,
-        f"{game_phrase.value} in {test_result.name}.",
+        f"{game_phrase.value} in {test_result.name}.{session['$instruction']}",
         report_url,
     )
