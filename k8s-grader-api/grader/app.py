@@ -3,8 +3,11 @@ from datetime import datetime
 
 from common.database import (
     delete_game_session,
+    delete_ongoing_npc_task,
     get_game_session,
     get_npc_background,
+    get_npc_lock,
+    get_ongoing_npc_task,
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_task,
@@ -63,6 +66,12 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     npc_background = get_npc_background(npc)
     if not npc_background:
         return error_response(f"NPC {npc} not found in the bachground database")
+
+    if get_npc_lock(email, game, npc):
+        return error_response(f"{npc} does not have any task for you!")
+    ongoing_npc, _ = get_ongoing_npc_task(email, game)
+    if ongoing_npc and ongoing_npc != npc:
+        return error_response(f"You need to complete task from {ongoing_npc} first!")
 
     user_data = get_user_data(email)
     if not user_data:
@@ -147,6 +156,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 report_url,
                 now_str,
             )
+            delete_ongoing_npc_task(email, game, npc)
             save_npc_lock(email, game, npc)
             return test_result_response(
                 game_phrase,

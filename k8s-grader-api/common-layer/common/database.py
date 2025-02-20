@@ -19,7 +19,7 @@ npc_lock_table = dynamodb.Table(os.getenv("NpcLockTable"))
 npc_background_table = dynamodb.Table(os.getenv("NpcBackgroundTable"))
 
 
-def is_endpoint_exist(email, endpoint):
+def is_endpoint_exist(email: str, endpoint: str):
     response = account_table.query(
         IndexName="EndpointIndex", KeyConditionExpression=Key("endpoint").eq(endpoint)
     )
@@ -29,7 +29,7 @@ def is_endpoint_exist(email, endpoint):
     return False
 
 
-def save_account(email, endpoint, client_certificate, client_key):
+def save_account(email: str, endpoint: str, client_certificate: str, client_key: str):
     account_table.put_item(
         Item={
             "email": email,
@@ -41,12 +41,12 @@ def save_account(email, endpoint, client_certificate, client_key):
     )
 
 
-def get_user_data(email):
+def get_user_data(email: str):
     response = account_table.get_item(Key={"email": email})
     return response.get("Item")
 
 
-def get_tasks_by_email_and_game(email, game):
+def get_tasks_by_email_and_game(email: str, game: str):
 
     response = game_task_table.query(
         KeyConditionExpression=Key("email").eq(email)
@@ -57,17 +57,17 @@ def get_tasks_by_email_and_game(email, game):
     return sorted([item["game"].split("#", 1)[1] for item in items])
 
 
-def save_game_task(email, game, task):
+def save_game_task(email: str, game: str, task: str):
     game_task_table.put_item(
         Item={"email": email, "game": f"{game}#{task}", "time": int(time.time())}
     )
 
 
-def delete_game_task(email, game, task):
+def delete_game_task(email: str, game: str, task: str):
     game_task_table.delete_item(Key={"email": email, "game": f"{game}#{task}"})
 
 
-def save_game_session(email, game, task, session):
+def save_game_session(email: str, game: str, task: str, session):
     session_table.put_item(
         Item={
             "email": email,
@@ -78,11 +78,11 @@ def save_game_session(email, game, task, session):
     )
 
 
-def delete_game_session(email, game, task):
+def delete_game_session(email: str, game: str, task: str):
     session_table.delete_item(Key={"email": email, "game": f"{game}#{task}"})
 
 
-def get_game_session(email, game, task):
+def get_game_session(email: str, game: str, task: str):
     response = session_table.get_item(Key={"email": email, "game": f"{game}#{task}"})
     item = response.get("Item")
     if item:
@@ -90,7 +90,7 @@ def get_game_session(email, game, task):
     return None
 
 
-def get_api_key(email):
+def get_api_key(email: str):
     response = api_key_table.get_item(Key={"email": email})
     item = response.get("Item")
     if item:
@@ -98,7 +98,7 @@ def get_api_key(email):
     return None
 
 
-def save_api_key(email, api_key):
+def save_api_key(email: str, api_key: str):
     api_key_table.put_item(Item={"email": email, "api_key": api_key})
 
 
@@ -119,6 +119,7 @@ def save_test_record(
             "gameTime": game + "#" + now_str,
             "task": current_task,
             "gamePhase": game_phase.name,
+            "testResult": test_result.name,
             "bucket": bucket,
             "key": key,
             "reportUrl": report_url,
@@ -127,13 +128,31 @@ def save_test_record(
     )
 
 
-def save_npc_task(email, game, task):
+def save_npc_task_as_ongoing(email, game: str, npc: str, task: str):
     npc_task_table.put_item(
-        Item={"email": email, "game": f"{game}#{task}", "time": int(time.time())}
+        Item={
+            "email": email,
+            "game": game,
+            "npc": npc,
+            "task": task,
+            "time": int(time.time()),
+        }
     )
 
 
-def save_npc_lock(email, game, npc):
+def get_ongoing_npc_task(email: str, game: str):
+    response = npc_task_table.get_item(Key={"email": email, "game": game})
+    item = response.get("Item")
+    if item:
+        return item["npc"], item["task"]
+    return None, None
+
+
+def delete_ongoing_npc_task(email: str, game: str, npc: str):
+    npc_task_table.delete_item(Key={"email": email, "game": game, "npc": npc})
+
+
+def save_npc_lock(email: str, game: str, npc: str):
     expiration_time = int((datetime.now() + timedelta(minutes=30)).timestamp())
     npc_lock_table.put_item(
         Item={
@@ -145,7 +164,7 @@ def save_npc_lock(email, game, npc):
     )
 
 
-def get_npc_lock(email, game, npc):
+def get_npc_lock(email: str, game: str, npc: str):
     response = npc_lock_table.get_item(
         Key={"email": email, "gameNpc": game + "#" + npc}
     )
@@ -155,7 +174,7 @@ def get_npc_lock(email, game, npc):
     return None
 
 
-def get_npc_background(name):
+def get_npc_background(name: str):
     response = npc_background_table.get_item(Key={"name": name})
     item = response.get("Item")
     if item:

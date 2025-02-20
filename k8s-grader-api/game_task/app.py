@@ -5,9 +5,11 @@ from common.database import (
     get_game_session,
     get_npc_background,
     get_npc_lock,
+    get_ongoing_npc_task,
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_session,
+    save_npc_task_as_ongoing,
     save_test_record,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
@@ -58,7 +60,10 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         )
 
     if get_npc_lock(email, game, npc):
-        return ok_response(f"{npc} does not have any task for you!")
+        return error_response(f"{npc} does not have any task for you!")
+    ongoing_npc, _ = get_ongoing_npc_task(email, game)
+    if ongoing_npc and ongoing_npc != npc:
+        return error_response(f"You need to complete task from {ongoing_npc} first!")
 
     user_data = get_user_data(email)
     if not user_data:
@@ -121,6 +126,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         logger.info(session)
 
     next_game_phrase = get_next_game_phrase(game, current_task, GamePhrase.SETUP)
+    save_npc_task_as_ongoing(email, game, npc, current_task)
     return test_result_response(
         GamePhrase.SETUP,
         next_game_phrase,
