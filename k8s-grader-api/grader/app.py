@@ -156,7 +156,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 report_url,
                 now_str,
             )
-            delete_ongoing_npc_task(email, game, npc)
+            delete_ongoing_npc_task(email, game)
             save_npc_lock(email, game, npc)
             return test_result_response(
                 game_phrase,

@@ -125,12 +125,13 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         save_game_session(email, game, current_task, session)
         logger.info(session)
 
-    next_game_phrase = get_next_game_phrase(game, current_task, GamePhrase.SETUP)
-    save_npc_task_as_ongoing(email, game, npc, current_task)
-    return test_result_response(
-        GamePhrase.SETUP,
-        next_game_phrase,
-        test_result,
-        instruction,
-        report_url,
-    )
+        next_game_phrase = get_next_game_phrase(game, current_task, GamePhrase.SETUP)
+        save_npc_task_as_ongoing(email, game, npc, current_task)
+        return test_result_response(
+            GamePhrase.SETUP,
+            next_game_phrase,
+            test_result,
+            instruction,
+            report_url,
+        )
+    return error_response("Setup failed!")

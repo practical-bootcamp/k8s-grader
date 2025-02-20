@@ -148,8 +148,8 @@ def get_ongoing_npc_task(email: str, game: str):
     return None, None
 
 
-def delete_ongoing_npc_task(email: str, game: str, npc: str):
-    npc_task_table.delete_item(Key={"email": email, "game": game, "npc": npc})
+def delete_ongoing_npc_task(email: str, game: str):
+    npc_task_table.delete_item(Key={"email": email, "game": game})
 
 
 def save_npc_lock(email: str, game: str, npc: str):
