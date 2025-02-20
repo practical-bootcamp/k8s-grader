@@ -58,6 +58,13 @@ cd k8s-grader-api
 sam build
 sam deploy --parameter-overrides SecretHash="XXXXXXXXXXX"
 ```
+
+After deployment, import the NPC background stories into the database. Open the link in output "LoadNpcBackgroundApi".
+```
+https://xxxxx.execute-api.us-east-1.amazonaws.com/Prod/load_npc_background/?secret=yyyyyy=&sheet_id=1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4
+```
+Clone the [Google Spreadsheet](https://docs.google.com/spreadsheets/d/1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4/edit?gid=0#gid=0) and customize the NPC backgrounds as desired. Modify the `sheet_id` in the URL to import your personalized NPC backgrounds.
+
 ## Minikube for exercise
 
 A Minikube endpoint accessible via the internet is required, and must remain confidential.  Deployment options include EC2 or Codespaces.

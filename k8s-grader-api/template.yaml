@@ -395,7 +395,7 @@ Outputs:
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/keygen/?secret=${SecretHash}&email="
   LoadNpcBackgroundApi:
     Description: "Endpoint URL for LoadNpcBackground function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/load_npc_background/?secret=${SecretHash}&sheet_id="  
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/load_npc_background/?secret=${SecretHash}&sheet_id=1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4"  
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
