@@ -52,4 +52,4 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     for npc in npc_backgrounds:
         save_npc_background(npc["name"], npc["age"], npc["gender"], npc["background"])
 
-    return text_response("Updated")
+    return text_response("Updated NPC backgrounds!")

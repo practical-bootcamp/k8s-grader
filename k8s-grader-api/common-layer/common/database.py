@@ -1,10 +1,11 @@
 import json
 import os
 import time
+from datetime import datetime, timedelta
 
 import boto3
 from boto3.dynamodb.conditions import Key
-from common.pytest import GamePhrase
+from common.pytest import GamePhrase, TestResult
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -106,8 +107,10 @@ def save_test_record(
     game: str,
     current_task,
     game_phase: GamePhrase,
+    test_result: TestResult,
     bucket: str,
     key: str,
+    report_url: str,
     now_str: str,
 ):
     test_record_table.put_item(
@@ -118,17 +121,10 @@ def save_test_record(
             "gamePhase": game_phase.name,
             "bucket": bucket,
             "key": key,
+            "reportUrl": report_url,
             "time": now_str,
         }
     )
-
-
-def get_test_record(email, game_time):
-    response = test_record_table.get_item(Key={"email": email, "gameTime": game_time})
-    item = response.get("Item")
-    if item:
-        return json.loads(item["record"])
-    return None
 
 
 def save_npc_task(email, game, task):
@@ -137,14 +133,22 @@ def save_npc_task(email, game, task):
     )
 
 
-def save_npc_lock(email, game_npc, ttl):
+def save_npc_lock(email, game, npc):
+    expiration_time = int((datetime.now() + timedelta(minutes=30)).timestamp())
     npc_lock_table.put_item(
-        Item={"email": email, "gameNpc": game_npc, "ttl": ttl, "time": int(time.time())}
+        Item={
+            "email": email,
+            "gameNpc": game + "#" + npc,
+            "ttl": expiration_time,
+            "time": int(time.time()),
+        }
     )
 
 
-def get_npc_lock(email, game_npc):
-    response = npc_lock_table.get_item(Key={"email": email, "gameNpc": game_npc})
+def get_npc_lock(email, game, npc):
+    response = npc_lock_table.get_item(
+        Key={"email": email, "gameNpc": game + "#" + npc}
+    )
     item = response.get("Item")
     if item:
         return item

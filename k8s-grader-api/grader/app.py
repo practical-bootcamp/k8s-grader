@@ -4,16 +4,18 @@ from datetime import datetime
 from common.database import (
     delete_game_session,
     get_game_session,
+    get_npc_background,
     get_tasks_by_email_and_game,
     get_user_data,
     save_game_task,
+    save_npc_lock,
     save_test_record,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
 from common.handler import (
     error_response,
     extract_k8s_credentials,
-    get_email_and_game_from_event,
+    get_email_game_and_npc_from_event,
     ok_response,
     setup_paths,
     test_result_response,
@@ -52,11 +54,15 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     if not game_phrase:
         return error_response("Phrase parameter is missing or not supported.")
 
-    email, game = get_email_and_game_from_event(event)
-    if not email or not game:
-        return error_response("Email and Game parameter is missing")
+    email, game, npc = get_email_game_and_npc_from_event(event)
+    if not email or not game or not npc:
+        return error_response("Email, Game, or NPC parameter is missing")
     if not game.isalnum():
         return error_response("Game parameter must be a single alphanumeric word")
+
+    npc_background = get_npc_background(npc)
+    if not npc_background:
+        return error_response(f"NPC {npc} not found in the bachground database")
 
     user_data = get_user_data(email)
     if not user_data:
@@ -100,11 +106,21 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         )
 
         bucket, key = get_bucket_key(email, game, current_task, game_phrase, now_str)
-        save_test_record(email, game, current_task, game_phrase, bucket, key, now_str)
+        save_test_record(
+            email,
+            game,
+            current_task,
+            game_phrase,
+            test_result,
+            bucket,
+            key,
+            report_url,
+            now_str,
+        )
 
         if test_result == TestResult.OK and game_phrase == GamePhrase.CHECK:
             save_game_task(email, game, current_task)
-            run_tests(GamePhrase.CLEANUP, game, current_task)
+            test_cleanup_result = run_tests(GamePhrase.CLEANUP, game, current_task)
             upload_test_result(
                 "/tmp/report.html", game_phrase, now_str, email, game, current_task
             )
@@ -121,8 +137,17 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 email, game, current_task, GamePhrase.CLEANUP, now_str
             )
             save_test_record(
-                email, game, current_task, GamePhrase.CLEANUP, bucket, key, now_str
+                email,
+                game,
+                current_task,
+                GamePhrase.CLEANUP,
+                test_cleanup_result,
+                bucket,
+                key,
+                report_url,
+                now_str,
             )
+            save_npc_lock(email, game, npc)
             return test_result_response(
                 game_phrase,
                 None,

@@ -34,7 +34,12 @@ def upload_test_result(file_name, game_phase: GamePhrase, time, email, game, tas
 
 
 def generate_presigned_url(
-    game_phase: GamePhrase, time, email, game, task, expiration=3600
+    game_phase: GamePhrase,
+    time,
+    email,
+    game,
+    task,
+    expiration=604800,  # 7 days in seconds
 ):
     _, object_name_with_time = get_bucket_key(email, game, task, game_phase, time)
 
