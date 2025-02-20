@@ -65,6 +65,13 @@ https://xxxxx.execute-api.us-east-1.amazonaws.com/Prod/load_npc_background/?secr
 ```
 Clone the [Google Spreadsheet](https://docs.google.com/spreadsheets/d/1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4/edit?gid=0#gid=0) and customize the NPC backgrounds as desired. Modify the `sheet_id` in the URL to import your personalized NPC backgrounds.
 
+For development, if you want to reset the game, run the following commands
+```
+cd tools
+python reset_game.py
+```
+It will delete all game state related items.
+
 ## Minikube for exercise
 
 A Minikube endpoint accessible via the internet is required, and must remain confidential.  Deployment options include EC2 or Codespaces.
