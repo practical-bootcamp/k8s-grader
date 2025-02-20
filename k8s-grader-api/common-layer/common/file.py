@@ -31,5 +31,6 @@ def create_json_input(endpoint, extra_data=None):
         "host": endpoint,
     }
     json_input.update(extra_data)
+    del json_input["$instruction"]
     with open("/tmp/json_input.json", "w", encoding="utf-8") as json_file:
         json.dump(json_input, json_file)
