@@ -13,7 +13,6 @@ def upload_test_result(file_name, game_phase: GamePhrase, time, email, game, tas
         f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
     )
 
-    # Upload the file
     s3_client = boto3.client("s3")
     try:
         s3_client.upload_file(
@@ -35,12 +34,15 @@ def upload_test_result(file_name, game_phase: GamePhrase, time, email, game, tas
 
 
 def generate_presigned_url(
-    game_phase: GamePhrase, time, email, game, task, expiration=3600
+    game_phase: GamePhrase,
+    time,
+    email,
+    game,
+    task,
+    expiration=604800,  # 7 days in seconds
 ):
-    object_name_with_time = (
-        f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
-    )
-    # Generate a presigned URL for the S3 object
+    _, object_name_with_time = get_bucket_key(email, game, task, game_phase, time)
+
     s3_client = boto3.client("s3")
     try:
         response = s3_client.generate_presigned_url(
@@ -52,5 +54,11 @@ def generate_presigned_url(
         print("Credentials not available")
         return None
 
-    # The response contains the presigned URL
     return response
+
+
+def get_bucket_key(email, game, task, game_phase: GamePhrase, time):
+    object_name_with_time = (
+        f"{game}/{email}/{task}/test_report_{game_phase.name}_{time}.html"
+    )
+    return TestResultBucket, object_name_with_time

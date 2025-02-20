@@ -98,17 +98,16 @@ def extract_k8s_credentials(user_data):
     return client_certificate, client_key, endpoint
 
 
-def get_email_and_game_from_event(event):
+def get_email_game_and_npc_from_event(event):
     api_key = event["headers"].get("x-api-key")
     if not api_key:
-        return None, None
+        return None, None, None
 
     email = get_email_from_api_key(api_key)
-
     query_params = event.get("queryStringParameters")
     if query_params:
-        return email, query_params.get("game")
-    return None, None
+        return email, query_params.get("game"), query_params.get("npc")
+    return None, None, None
 
 
 def get_email_from_event(event):
