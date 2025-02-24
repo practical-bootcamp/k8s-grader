@@ -55,8 +55,7 @@ python genkey.py
 
 ```
 cd k8s-grader-api
-sam build
-sam deploy --parameter-overrides SecretHash="XXXXXXXXXXX"
+sam build && sam deploy --parameter-overrides SecretHash="XXXXX"
 ```
 
 After deployment, import the NPC background stories into the database. Open the link in output "LoadNpcBackgroundApi".

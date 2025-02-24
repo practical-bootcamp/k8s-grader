@@ -1,3 +1,4 @@
+import base64
 import random
 
 from common.pytest import get_session_template
@@ -12,6 +13,10 @@ def random_name(seed: str = "") -> str:
 def random_number(from_number: int, to_number: int, seed: str = "") -> str:
     random.seed(seed)
     return str(random.randint(from_number, to_number))
+
+
+def base64_encode(value: str) -> str:
+    return base64.b64encode(value.encode()).decode()
 
 
 def render(template, func_dict):
@@ -30,6 +35,7 @@ def generate_session(email: str, game: str, task: str) -> dict:
         "student_id": lambda: student_id,
         "random_name": lambda: random_name(student_id),
         "random_number": lambda f, to: random_number(f, to, student_id),
+        "base64_encode": base64_encode,
     }
 
     session = {
