@@ -23,8 +23,8 @@ def read_env_template(file_path):
     return data
 
 
-def delete_all_items(dynamodb_resource, all_tables):
-    for table_name in all_tables:
+def delete_all_items(dynamodb_resource, table_names):
+    for table_name in table_names:
         table = dynamodb_resource.Table(table_name)
         # Retrieve primary key attributes
         key_attrs = [attr["AttributeName"] for attr in table.key_schema]
@@ -68,4 +68,4 @@ if __name__ == "__main__":
         npc_lock_table,
     ]
 
-    delete_all_items(dynamodb_resource=dynamodb, all_tables=all_tables)
+    delete_all_items(dynamodb_resource=dynamodb, table_names=all_tables)

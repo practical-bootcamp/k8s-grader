@@ -89,6 +89,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     else:
         instruction = session["$instruction"]
     session["$instruction"] = instruction
+    # Always update the k8s credentials from DynamoDB to make sure they are up-to-date.
     session["$client_certificate"] = client_certificate
     session["$client_key"] = client_key
     session["$endpoint"] = endpoint
