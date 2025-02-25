@@ -1,7 +1,10 @@
 import logging
+import random
 from datetime import datetime
 
 from common.database import (
+    get_ai_instruction_template,
+    get_ai_random_chat,
     get_game_session,
     get_npc_background,
     get_npc_lock,
@@ -24,6 +27,7 @@ from common.handler import (
 from common.pytest import (
     GamePhrase,
     TestResult,
+    get_ai_instruction,
     get_current_task,
     get_instruction,
     get_next_game_phrase,
@@ -59,6 +63,12 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             f"NPC {npc} or main character not found in the bachground database"
         )
 
+    if random.random() < 0.5:
+        message = get_ai_random_chat(npc)
+        if message is None:
+            message = "..."
+        return ok_response(message)
+
     if get_npc_lock(email, game, npc):
         return error_response(f"{npc} does not have any task for you!")
     ongoing_npc, _ = get_ongoing_npc_task(email, game)
@@ -81,8 +91,11 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     session = get_game_session(email, game, current_task)
     if session is None:
         session = generate_session(email, game, current_task)
-        instruction = get_instruction(game, current_task, session)
-        # TODO: LLM rewrite instruction with main character and NPC background!
+        ai_instruction_template = get_ai_instruction_template(game, current_task, npc)
+        if ai_instruction_template:
+            instruction = get_ai_instruction(ai_instruction_template, session)
+        else:
+            instruction = get_instruction(game, current_task, session)
 
         if not instruction:
             return error_response("Instruction not found!")

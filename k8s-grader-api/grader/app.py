@@ -1,9 +1,11 @@
 import logging
+import random
 from datetime import datetime
 
 from common.database import (
     delete_game_session,
     delete_ongoing_npc_task,
+    get_ai_random_chat,
     get_game_session,
     get_npc_background,
     get_npc_lock,
@@ -72,6 +74,12 @@ def lambda_handler(event, context):  # pylint: disable=W0613
     ongoing_npc, _ = get_ongoing_npc_task(email, game)
     if ongoing_npc and ongoing_npc != npc:
         return error_response(f"You need to complete task from {ongoing_npc} first!")
+
+    if random.random() < 0.3:
+        message = get_ai_random_chat(npc)
+        if message is None:
+            message = "..."
+        return ok_response(message)
 
     user_data = get_user_data(email)
     if not user_data:
@@ -176,6 +184,6 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         game_phrase,
         next_game_phrase,
         test_result,
-        f"{game_phrase.value} in {test_result.name}.{session['$instruction']}",
+        f"For {game_phrase.value} of {test_result.name}. {session['$instruction']}",
         report_url,
     )

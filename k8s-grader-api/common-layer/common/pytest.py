@@ -139,6 +139,10 @@ def get_instruction(game: str, task: str, session: dict):
     return None
 
 
+def get_ai_instruction(instruction: str, session: dict):
+    return render(instruction, session)
+
+
 def get_next_game_phrase(game: str, task: str, current_game_phrase: GamePhrase):
     get_tests()
 
