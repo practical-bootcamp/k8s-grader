@@ -17,6 +17,7 @@ test_record_table = dynamodb.Table(os.getenv("TestRecordTable"))
 npc_task_table = dynamodb.Table(os.getenv("NpcTaskTable"))
 npc_lock_table = dynamodb.Table(os.getenv("NpcLockTable"))
 npc_background_table = dynamodb.Table(os.getenv("NpcBackgroundTable"))
+conversation_table = dynamodb.Table(os.getenv("ConversationTable"))
 
 
 def is_endpoint_exist(email: str, endpoint: str):
@@ -187,7 +188,7 @@ def get_npc_background(name: str):
     return None
 
 
-def save_npc_background(name, age, gender, background):
+def save_npc_background(name: str, age: str, gender: str, background: str):
     npc_background_table.put_item(
         Item={
             "name": name,
@@ -197,3 +198,18 @@ def save_npc_background(name, age, gender, background):
             "time": int(time.time()),
         }
     )
+
+
+def get_ai_instruction_template(game: str, task: str, npc: str):
+    key = f"{game}#{task}#{npc}"
+    response = conversation_table.get_item(Key={"key": key})
+    if response.get("Item"):
+        return response.get("Item")["instruction"]
+    return None
+
+
+def get_ai_random_chat(npc: str):
+    response = conversation_table.get_item(Key={"key": npc})
+    if response.get("Item"):
+        return response.get("Item")["instruction"]
+    return None

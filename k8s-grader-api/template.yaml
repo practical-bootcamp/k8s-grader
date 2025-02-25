@@ -148,6 +148,16 @@ Resources:
         - AttributeName: "name"
           KeyType: "HASH"
 
+  ConversationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "key"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "key"
+          KeyType: "HASH"
 
 # Handle CORS https://github.com/aws/serverless-application-model/issues/1786
   ApiGatewayApi:
@@ -221,6 +231,7 @@ Resources:
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
+          ConversationTable: !Ref ConversationTable
       Events:
         GameTask:
           Type: Api 
@@ -260,6 +271,7 @@ Resources:
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
+          ConversationTable: !Ref ConversationTable
       Events:
         GameTask:
           Type: Api 
@@ -298,6 +310,7 @@ Resources:
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
+          ConversationTable: !Ref ConversationTable
       Events:
          SaveK8sAccountGet:
           Type: Api 
@@ -339,6 +352,7 @@ Resources:
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
+          ConversationTable: !Ref ConversationTable
       Events:
         KeygenTask:
           Type: Api 
@@ -368,6 +382,7 @@ Resources:
           NpcTaskTable: !Ref NpcTaskTable
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
+          ConversationTable: !Ref ConversationTable
       Events:
         KeygenTask:
           Type: Api 
@@ -434,3 +449,6 @@ Outputs:
   NpcBackgroundTable:
     Description: "Name of the NpcBackgroundTable"
     Value: !Ref NpcBackgroundTable
+  ConversationTable:
+    Description: "Name of the ConversationTable"
+    Value: !Ref ConversationTable
