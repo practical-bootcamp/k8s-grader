@@ -67,7 +67,8 @@
                         alert('Account saved successfully');
                     })
                     .catch((error) => {                      
-                        alert('Failed to save account');
+                        alert('Failed to save account, and please retried later!');
+                        console.error('Error:', error);
                     });
             });
         </script>

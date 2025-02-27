@@ -452,3 +452,6 @@ Outputs:
   ConversationTable:
     Description: "Name of the ConversationTable"
     Value: !Ref ConversationTable
+  GameUrl:
+    Description: "Game URL and you need to replace the Student Individual API key."
+    Value: !Sub "https://wongcyrus.github.io/k8s-isekai/index.html?baseUrl=https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/&game=game01&apiKey=INDIVIDUAL_API_KEY"

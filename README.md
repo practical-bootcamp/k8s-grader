@@ -52,13 +52,13 @@ Generate a secret hash.
 cd tools
 python genkey.py
 ```
-
+Deploy the SAM stack with the generated secret hash:
 ```
-cd k8s-grader-api
-sam build && sam deploy --parameter-overrides SecretHash="XXXXX"
+./deploy.sh "SecretHash"
 ```
+This command builds the SAM stack, deploys it, and loads NPC data into DynamoDB. If you do not set the secret hash, the default one will be used.
 
-After deployment, import the NPC background stories into the database. Open the link in output "LoadNpcBackgroundApi".
+
 ```
 https://xxxxx.execute-api.us-east-1.amazonaws.com/Prod/load_npc_background/?secret=yyyyyy=&sheet_id=1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4
 ```
