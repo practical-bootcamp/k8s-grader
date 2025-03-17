@@ -9,6 +9,6 @@ source venv/bin/activate
 # Upgrade pip to the latest version
 pip install --upgrade pip
 
-pip install -r k8s-grader-api/layer/requirements.txt
+pip install -r k8s-grader-api/common-layer/requirements.txt
 
 echo "Virtual environment created and activated. Pip upgraded to the latest version."
