@@ -68,8 +68,9 @@ def test_result_response(
     game_phrase: GamePhrase,
     next_game_phrase: GamePhrase,
     test_result: TestResult,
-    instruction,
-    report_url,
+    instruction: str,
+    report_url: str,
+    easter_egg_url: str,
 ):
     return {
         "headers": {
@@ -86,6 +87,7 @@ def test_result_response(
                 "status": test_result.name,
                 "message": instruction,
                 "report_url": report_url,
+                "easter_egg_url": easter_egg_url if easter_egg_url else "",
             }
         ),
     }
