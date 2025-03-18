@@ -12,6 +12,10 @@ Parameters:
     Type: String
     Description: "Stage name for the API"
     Default: "Prod"
+  EasterEggSheetId:
+    Type: String
+    Description: "Sheet ID for Easter Egg"
+    Default: "1rxJQs32TlMDHubPgwMPgVFo3fx_hMuYRSL0ic3db9RM"
 Globals:
   Function:
     Timeout: 29
@@ -232,6 +236,7 @@ Resources:
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
+          EasterEggSheetId: !Ref EasterEggSheetId
       Events:
         GameTask:
           Type: Api 
@@ -272,6 +277,7 @@ Resources:
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
+          EasterEggSheetId: !Ref EasterEggSheetId
       Events:
         GameTask:
           Type: Api 

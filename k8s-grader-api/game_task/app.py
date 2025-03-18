@@ -147,5 +147,6 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             test_result,
             instruction,
             report_url,
+            None,
         )
     return error_response("Setup failed!")

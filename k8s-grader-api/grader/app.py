@@ -17,6 +17,7 @@ from common.database import (
     save_test_record,
 )
 from common.file import clear_tmp_directory, create_json_input, write_user_files
+from common.google_spreadsheet import get_easter_egg_link
 from common.handler import (
     error_response,
     extract_k8s_credentials,
@@ -134,7 +135,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             report_url,
             now_str,
         )
-
+        easter_egg_url = get_easter_egg_link(test_result)
         if test_result == TestResult.OK and game_phrase == GamePhrase.CHECK:
             save_game_task(email, game, current_task)
             test_cleanup_result = run_tests(GamePhrase.CLEANUP, game, current_task)
@@ -172,6 +173,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
                 test_result,
                 f"{current_task} Completed!",
                 report_url,
+                easter_egg_url,
             )
     except (KeyError, ValueError, RuntimeError) as e:
         return error_response(f"{type(e).__name__}: {str(e)}")
@@ -186,4 +188,5 @@ def lambda_handler(event, context):  # pylint: disable=W0613
         test_result,
         f"For {game_phrase.value} of {test_result.name}. {session['$instruction']}",
         report_url,
+        easter_egg_url,
     )

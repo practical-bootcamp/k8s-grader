@@ -32,6 +32,11 @@ https://github.com/wongcyrus/k8s-game-rule
 ```
 ./aws_sam_setup.sh
 ```
+###
+Create Python Virtural environment and install dependances.
+```
+./create_virtural_env.sh
+```
 ### Configure AWS Credentials 
 Method 1: Set the token with CLI (Prefered)
 ```
