@@ -167,6 +167,17 @@ Resources:
         - AttributeName: "key"
           KeyType: "HASH"
 
+  GameSourceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "game"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "game"
+          KeyType: "HASH"
+
 # Handle CORS https://github.com/aws/serverless-application-model/issues/1786
   ApiGatewayApi:
     Type: AWS::Serverless::Api
@@ -243,6 +254,7 @@ Resources:
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
           EasterEggSheetId: !Ref EasterEggSheetId
+          GameSourceTable: !Ref GameSourceTable
       Events:
         GameTask:
           Type: Api 
@@ -284,6 +296,7 @@ Resources:
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
           EasterEggSheetId: !Ref EasterEggSheetId
+          GameSourceTable: !Ref GameSourceTable
       Events:
         GameTask:
           Type: Api 
@@ -323,6 +336,7 @@ Resources:
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
+          GameSourceTable: !Ref GameSourceTable
       Events:
          SaveK8sAccountGet:
           Type: Api 
@@ -365,6 +379,7 @@ Resources:
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
+          GameSourceTable: !Ref GameSourceTable
       Events:
         KeygenTask:
           Type: Api 
@@ -397,6 +412,7 @@ Resources:
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
           NCPBackgroundSheetId: !Ref NCPBackgroundSheetId
+          GameSourceTable: !Ref GameSourceTable
 
   PostDeploymentCustomResource:
     Type: AWS::CloudFormation::CustomResource
@@ -461,6 +477,9 @@ Outputs:
   ConversationTable:
     Description: "Name of the ConversationTable"
     Value: !Ref ConversationTable
+  GameSourceTable:
+    Description: "Name of the GameSourceTable"
+    Value: !Ref GameSourceTable
   GameUrl:
     Description: "Game URL and you need to replace the Student Individual API key."
     Value: !Sub "https://wongcyrus.github.io/k8s-isekai/index.html?baseUrl=https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/&game=game01&apiKey=INDIVIDUAL_API_KEY"

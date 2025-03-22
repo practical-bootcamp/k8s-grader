@@ -3,7 +3,7 @@ import uuid
 from time import sleep
 
 import cfnresponse
-from common.database import save_npc_background
+from common.database import save_game_source, save_npc_background
 from common.google_spreadsheet import get_npc_background_google_spreadsheet
 
 
@@ -43,6 +43,10 @@ def lambda_handler(event, context):
                 save_npc_background(
                     npc["name"], npc["age"], npc["gender"], npc["background"]
                 )
+            save_game_source(
+                "game01",
+                "https://github.com/practical-bootcamp/k8s-game-rule/archive/refs/heads/main.zip",
+            )
         except Exception as e:  # pylint: disable=broad-except
             reason = f"Failed: {str(e)}"
             response["Reason"] = reason

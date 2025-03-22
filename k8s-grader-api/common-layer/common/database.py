@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import boto3
 from boto3.dynamodb.conditions import Key
-from common.pytest import GamePhrase, TestResult
+from common.status import GamePhrase, TestResult
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -18,6 +18,7 @@ npc_task_table = dynamodb.Table(os.getenv("NpcTaskTable"))
 npc_lock_table = dynamodb.Table(os.getenv("NpcLockTable"))
 npc_background_table = dynamodb.Table(os.getenv("NpcBackgroundTable"))
 conversation_table = dynamodb.Table(os.getenv("ConversationTable"))
+game_source_table = dynamodb.Table(os.getenv("GameSourceTable"))
 
 
 def is_endpoint_exist(email: str, endpoint: str):
@@ -213,3 +214,18 @@ def get_ai_random_chat(npc: str):
     if response.get("Item"):
         return response.get("Item")["instruction"]
     return None
+
+
+def get_game_source(game: str) -> str:
+    response = game_source_table.get_item(Key={"game": game})
+    return response.get("Item")["source"] if response.get("Item") else None
+
+
+def save_game_source(game: str, source: str):
+    game_source_table.put_item(
+        Item={
+            "game": game,
+            "source": source,
+            "time": int(time.time()),
+        }
+    )

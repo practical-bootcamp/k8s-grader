@@ -26,14 +26,9 @@ from common.handler import (
     setup_paths,
     test_result_response,
 )
-from common.pytest import (
-    GamePhrase,
-    TestResult,
-    get_current_task,
-    get_next_game_phrase,
-    run_tests,
-)
+from common.pytest import get_current_task, get_next_game_phrase, run_tests
 from common.s3 import generate_presigned_url, get_bucket_key, upload_test_result
+from common.status import GamePhrase, TestResult
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

@@ -1,7 +1,7 @@
 import json
 import os
 
-from common.pytest import GamePhrase, TestResult
+from common.status import GamePhrase, TestResult
 from cryptography.fernet import Fernet
 
 SECRET_HASH = os.getenv("SecretHash")
