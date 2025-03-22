@@ -61,13 +61,9 @@ Deploy the SAM stack with the generated secret hash:
 ```
 ./deploy.sh "SecretHash"
 ```
-This command builds the SAM stack, deploys it, and loads NPC data into DynamoDB. If you do not set the secret hash, the default one will be used.
+If you do not set the secret hash, the default one will be used.
 
-
-```
-https://xxxxx.execute-api.us-east-1.amazonaws.com/Prod/load_npc_background/?secret=yyyyyy=&sheet_id=1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4
-```
-Clone the [Google Spreadsheet](https://docs.google.com/spreadsheets/d/1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4/edit?gid=0#gid=0) and customize the NPC backgrounds as desired. Modify the `sheet_id` in the URL to import your personalized NPC backgrounds.
+Clone the [Google Spreadsheet](https://docs.google.com/spreadsheets/d/1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4/edit?gid=0#gid=0) and customize the NPC backgrounds as desired. Modify the `NCPBackgroundSheetId` before deployment to import your personalized NPC backgrounds.
 
 For development, if you want to reset the game, run the following commands
 ```

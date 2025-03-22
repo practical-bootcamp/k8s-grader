@@ -16,6 +16,10 @@ Parameters:
     Type: String
     Description: "Sheet ID for Easter Egg"
     Default: "1rxJQs32TlMDHubPgwMPgVFo3fx_hMuYRSL0ic3db9RM"
+  NCPBackgroundSheetId:
+    Type: String
+    Description: "Sheet ID for NCP Background"
+    Default: "1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4"
 Globals:
   Function:
     Timeout: 29
@@ -198,8 +202,9 @@ Resources:
       LayerName: LibLayer
       Description: A layer for shared libraries
       ContentUri: layer
+      RetentionPolicy: Delete
       CompatibleRuntimes:
-        - python3.11
+        - python3.11    
     Metadata:
       BuildMethod: makefile # Required to have AWS SAM build this layer
 
@@ -209,6 +214,7 @@ Resources:
       LayerName: CommonLayer
       Description: Dependencies required for my Python lambdas
       ContentUri: common-layer/
+      RetentionPolicy: Delete
       CompatibleRuntimes:
         - python3.11
       LicenseInfo: "Apache License 2.0"
@@ -370,10 +376,11 @@ Resources:
             Auth:
               ApiKeyRequired: false
 
-  LoadNpcBackgroundFunction:
+  PostDeploymentFunction:
     Type: AWS::Serverless::Function 
     Properties:
-      CodeUri: load_npc_background/
+      Timeout: 120
+      CodeUri: post_deployment/
       Role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
       Layers:
         - !Ref CommonLayer
@@ -389,16 +396,15 @@ Resources:
           NpcLockTable: !Ref NpcLockTable
           NpcBackgroundTable: !Ref NpcBackgroundTable
           ConversationTable: !Ref ConversationTable
-      Events:
-        KeygenTask:
-          Type: Api 
-          Properties:
-            Path: /load_npc_background
-            Method: get
-            RestApiId:
-              Ref: ApiGatewayApi
-            Auth:
-              ApiKeyRequired: false
+          NCPBackgroundSheetId: !Ref NCPBackgroundSheetId
+
+  PostDeploymentCustomResource:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt PostDeploymentFunction.Arn
+      ServiveTimeout: 120
+    DependsOn: 
+      - NpcBackgroundTable
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -413,9 +419,6 @@ Outputs:
   KeygenApi:
     Description: "Endpoint URL for Keygen function"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/keygen/?secret=${SecretHash}&email="
-  LoadNpcBackgroundApi:
-    Description: "Endpoint URL for LoadNpcBackground function"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/load_npc_background/?secret=${SecretHash}&sheet_id=1VdQsc9qslvd-gGhydN5dEZEX6Q5uliBQqRguJyHBZM4"  
   AccountTable:
     Description: "Name of the AccountTable"
     Value: !Ref AccountTable
