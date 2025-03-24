@@ -3,34 +3,11 @@ import os
 import shutil
 import threading
 import urllib.request
-from enum import Enum
 
 import pytest
+from common.database import get_game_source
+from common.status import GamePhrase, TestResult
 from jinja2 import Environment
-
-
-class GamePhrase(Enum):
-    SETUP = "setup"
-    READY = "ready"
-    ANSWER = "answer"
-    CHALLENGE = "challenge"
-    CHECK = "check"
-    CLEANUP = "cleanup"
-
-
-ROOT_PATH = "/tmp/k8s-game-rule-main"
-TEST_BASE_PATH = "/tmp/k8s-game-rule-main/tests"
-
-
-class TestResult(Enum):
-    OK = 0
-    TESTS_FAILED = 1
-    INTERRUPTED = 2
-    INTERNAL_ERROR = 3
-    USAGE_ERROR = 4
-    NO_TESTS_COLLECTED = 5
-    TIME_OUT = 6
-
 
 MAPPING = {
     GamePhrase.SETUP: "01_setup",
@@ -50,19 +27,27 @@ GAME_PHRASE_ORDER = [
 ]
 
 
+def get_root_path(game: str) -> str:
+    return f"/tmp/{game}"
+
+
+def get_test_base_path(game: str) -> str:
+    return f"/tmp/{game}/tests"
+
+
 def run_tests(test_phase: GamePhrase, game: str, task: str):
-    get_tests()
+    get_tests(game)
 
     def run_pytest():
         nonlocal retcode
         retcode = pytest.main(
             [
-                f"--rootdir={ROOT_PATH}",
+                f"--rootdir={get_root_path(game)}",
                 "--import-mode=importlib",
                 "--html=/tmp/report.html",
                 "--self-contained-html",
                 "-x",
-                f"{TEST_BASE_PATH}/{game}/{task}/test_{MAPPING[test_phase]}.py",
+                f"{get_test_base_path(game)}/{game}/{task}/test_{MAPPING[test_phase]}.py",
             ]
         )
 
@@ -76,17 +61,36 @@ def run_tests(test_phase: GamePhrase, game: str, task: str):
     return TestResult(retcode)
 
 
-def get_tests():
-    # TODO: Change this to S3 bucket download
-    if not os.path.exists("/tmp/k8s-game-rule-main.zip"):
-        url = "https://github.com/practical-bootcamp/k8s-game-rule/archive/refs/heads/main.zip"
-        urllib.request.urlretrieve(url, "/tmp/k8s-game-rule-main.zip")
-        shutil.unpack_archive("/tmp/k8s-game-rule-main.zip", "/tmp/")
+def get_repo_branch(game: str) -> tuple[str, str]:
+    source = get_game_source(game)
+    if source.startswith("https://github.com/"):
+        parts = source.split("/")
+        repo = parts[-5]
+        branch = parts[-1].replace(".zip", "").split("/")[-1]
+        return repo, branch
+    return None, None
+
+
+def get_tests(game: str):
+    source = get_game_source(game)
+    distination = f"/tmp/{game}.zip"
+    if not os.path.exists(distination):
+        urllib.request.urlretrieve(source, distination)
+        shutil.unpack_archive(distination, "/tmp/")
+        repo, branch = get_repo_branch(game)
+        source_folder = repo + "-" + branch
+        shutil.move(f"/tmp/{source_folder}", get_root_path(game))
+
+        if os.path.exists(f"/tmp/{source_folder}/{source_folder}"):
+            shutil.move(
+                f"/tmp/{source_folder}/{source_folder}", f"/tmp/{source_folder}/"
+            )
+            shutil.rmtree(f"/tmp/{source_folder}/{source_folder}")
 
 
 def get_tasks(game: str):
-    get_tests()
-    folder = f"{TEST_BASE_PATH}/{game}/"
+    get_tests(game)
+    folder = f"{get_test_base_path(game)}/{game}/"
     tasks = []
     for file in sorted(os.listdir(folder)):
         if os.path.isdir(os.path.join(folder, file)) and "99_test_template" not in file:
@@ -95,10 +99,10 @@ def get_tasks(game: str):
 
 
 def get_session_template(game: str, task: str):
-    get_tests()
+    get_tests(game)
     session = {}
-    game_session_file = f"{TEST_BASE_PATH}/{game}/session.json"
-    task_session_file = f"{TEST_BASE_PATH}/{game}/{task}/session.json"
+    game_session_file = f"{get_test_base_path(game)}/{game}/session.json"
+    task_session_file = f"{get_test_base_path(game)}/{game}/{task}/session.json"
     if os.path.exists(game_session_file):
         with open(game_session_file, "r", encoding="utf-8") as file:
             game_session = json.load(file)
@@ -129,8 +133,8 @@ def render(template, session):
 
 
 def get_instruction(game: str, task: str, session: dict):
-    get_tests()
-    instructions_file = f"{TEST_BASE_PATH}/{game}/{task}/instruction.md"
+    get_tests(game)
+    instructions_file = f"{get_test_base_path(game)}/{game}/{task}/instruction.md"
 
     if os.path.exists(instructions_file):
         with open(instructions_file, "r", encoding="utf-8") as file:
@@ -144,11 +148,11 @@ def get_ai_instruction(instruction: str, session: dict):
 
 
 def get_next_game_phrase(game: str, task: str, current_game_phrase: GamePhrase):
-    get_tests()
+    get_tests(game)
 
     current_index = GAME_PHRASE_ORDER.index(current_game_phrase)
     for next_index in range(current_index + 1, len(GAME_PHRASE_ORDER)):
-        test_file = f"{TEST_BASE_PATH}/{game}/{task}/test_{MAPPING[GAME_PHRASE_ORDER[next_index]]}.py"
+        test_file = f"{get_test_base_path(game)}/{game}/{task}/test_{MAPPING[GAME_PHRASE_ORDER[next_index]]}.py"
         if os.path.exists(test_file):
             return GAME_PHRASE_ORDER[next_index]
     return None

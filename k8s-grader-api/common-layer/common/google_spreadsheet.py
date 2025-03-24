@@ -4,7 +4,7 @@ import random
 from io import StringIO
 
 import requests
-from common.pytest import TestResult
+from common.status import TestResult
 
 
 def get_npc_background_google_spreadsheet(spreadsheet_id):

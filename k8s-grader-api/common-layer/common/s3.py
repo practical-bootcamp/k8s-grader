@@ -2,7 +2,7 @@ import os
 
 import boto3
 from botocore.exceptions import NoCredentialsError
-from common.pytest import GamePhrase
+from common.status import GamePhrase
 
 TestResultBucket = os.getenv("TestResultBucket")
 
