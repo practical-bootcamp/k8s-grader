@@ -65,7 +65,7 @@ def get_repo_branch(game: str) -> tuple[str, str]:
     source = get_game_source(game)
     if source.startswith("https://github.com/"):
         parts = source.split("/")
-        repo = parts[-3]
+        repo = parts[-5]
         branch = parts[-1].replace(".zip", "").split("/")[-1]
         return repo, branch
     return None, None
@@ -80,6 +80,12 @@ def get_tests(game: str):
         repo, branch = get_repo_branch(game)
         source_folder = repo + "-" + branch
         shutil.move(f"/tmp/{source_folder}", get_root_path(game))
+
+        if os.path.exists(f"/tmp/{source_folder}/{source_folder}"):
+            shutil.move(
+                f"/tmp/{source_folder}/{source_folder}", f"/tmp/{source_folder}/"
+            )
+            shutil.rmtree(f"/tmp/{source_folder}/{source_folder}")
 
 
 def get_tasks(game: str):
