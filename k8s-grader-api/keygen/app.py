@@ -74,13 +74,17 @@ def generate_token(secret, email):
 
 
 def create_api_key(name, value, rest_api_id):
-    response = client.create_api_key(
-        name=name,
-        value=value,
-        enabled=True,
-        stageKeys=[{"restApiId": rest_api_id, "stageName": STAGE_NAME}],
-    )
-    return response.get("id")
+    try:
+        response = client.create_api_key(
+            name=name,
+            value=value,
+            enabled=True,
+            stageKeys=[{"restApiId": rest_api_id, "stageName": STAGE_NAME}],
+        )
+        return response.get("id")
+    except Exception as e:
+        logger.error(f"Error creating API key: {e}")
+        return None
 
 
 def get_usage_plan_id(plan_name):

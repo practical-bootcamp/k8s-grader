@@ -1,6 +1,7 @@
 import json
 
 import boto3
+from botocore.exceptions import ClientError
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -25,29 +26,32 @@ def read_env_template(file_path):
 
 def delete_all_items(dynamodb_resource, table_names):
     for table_name in table_names:
-        table = dynamodb_resource.Table(table_name)
-        # Retrieve primary key attributes
-        key_attrs = [attr["AttributeName"] for attr in table.key_schema]
-        # Build projection expression and attribute mapping
-        expr_attr_names = {}
-        projection_expr_parts = []
-        for i, attr in enumerate(key_attrs):
-            alias = f"#k{i}"
-            expr_attr_names[alias] = attr
-            projection_expr_parts.append(alias)
-        projection_expr = ", ".join(projection_expr_parts)
+        try:
+            table = dynamodb_resource.Table(table_name)
+            # Retrieve primary key attributes
+            key_attrs = [attr["AttributeName"] for attr in table.key_schema]
+            # Build projection expression and attribute mapping
+            expr_attr_names = {}
+            projection_expr_parts = []
+            for i, attr in enumerate(key_attrs):
+                alias = f"#k{i}"
+                expr_attr_names[alias] = attr
+                projection_expr_parts.append(alias)
+            projection_expr = ", ".join(projection_expr_parts)
 
-        scan = table.scan(
-            ProjectionExpression=projection_expr,
-            ExpressionAttributeNames=expr_attr_names,
-        )
+            scan = table.scan(
+                ProjectionExpression=projection_expr,
+                ExpressionAttributeNames=expr_attr_names,
+            )
 
-        with table.batch_writer() as batch:
-            for each in scan["Items"]:
-                # Build proper key dictionary from the retrieved attributes
-                key = {attr: each[attr] for attr in key_attrs}
-                batch.delete_item(Key=key)
-        print(f"Deleted all items in {table_name}")
+            with table.batch_writer() as batch:
+                for each in scan["Items"]:
+                    # Build proper key dictionary from the retrieved attributes
+                    key = {attr: each[attr] for attr in key_attrs}
+                    batch.delete_item(Key=key)
+            print(f"Deleted all items in {table_name}")
+        except ClientError as e:
+            print(f"Error deleting items in {table_name}: {e}")
 
 
 if __name__ == "__main__":
