@@ -114,11 +114,12 @@ def get_email_game_and_npc_from_event(event):
 
 def get_email_from_event(event):
     api_key = event["headers"].get("x-api-key")
-    if not api_key:
-        return None
-    return get_email_from_api_key(api_key)
+    return get_email_from_api_key(api_key) if api_key else None
 
 
 def get_email_from_api_key(api_key):
-    fernet = Fernet(SECRET_HASH)
-    return fernet.decrypt(api_key.encode()).decode()
+    try:
+        fernet = Fernet(SECRET_HASH)
+        return fernet.decrypt(api_key.encode()).decode()
+    except Exception as e:
+        raise ValueError(f"Invalid API key: {e}") from e
