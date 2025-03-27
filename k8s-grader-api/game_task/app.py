@@ -62,7 +62,7 @@ def lambda_handler(event, context):  # pylint: disable=W0613
             f"NPC {npc} or main character not found in the bachground database"
         )
 
-    if random.random() < 0.5:
+    if random.random() < 0.3:
         message = get_ai_random_chat(npc)
         if message is None:
             message = "..."
